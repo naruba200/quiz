@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz CNXH KH - Chương 4</title>
+<style>
+:root { --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5d6b82; --primary: #1b6ef3; --primary-dark: #0f4fb5; --ok: #16844f; --border: #dce4f3; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #ecf3ff 0%, #f8fbff 50%, #eefbf6 100%); color: var(--text); min-height: 100vh; padding: 24px; }
+.container { width: min(950px, 100%); margin: 0 auto; }
+.header { margin-bottom: 16px; text-align: center; }
+h1 { margin: 0; font-size: 24px; color: var(--primary-dark); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+#progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+.card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.question-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+.options { display: grid; gap: 12px; }
+.option { display: flex; align-items: center; padding: 14px 16px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+.option:hover:not(.disabled) { border-color: var(--primary); background: #f0f6ff; }
+.option.selected { border-color: var(--primary); background: #f0f6ff; font-weight: 600; }
+.option.correct { border-color: var(--ok); background: #e8f5e9; color: var(--ok); }
+.option.wrong { border-color: #d32f2f; background: #ffebee; color: #d32f2f; }
+.option input { display: none; }
+.controls { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
+button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 15px; }
+#submitBtn { background: var(--primary); color: white; }
+#nextBtn { background: var(--text); color: white; }
+#resetBtn { background: #e0e0e0; color: #444; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.feedback { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: 500; display: none; }
+.correct-answer { font-weight: bold; color: var(--ok); }
+#resultBox { display: none; margin-top: 24px; text-align: center; padding: 30px; border-radius: 12px; background: white; }
+.nav-panel {
+  position: fixed; top: 12px; right: 12px;
+  background: white; border-radius: 10px; padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+  max-width: 200px; max-height: 300px; overflow-y: auto;
+  z-index: 1000;
+}
+.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; color: var(--text); transition: all 0.15s; user-select: none; }
+.nav-circle:hover { transform: scale(1.15); }
+.nav-circle.correct { background: #16844f; border-color: #16844f; color: white; }
+.nav-circle.wrong { background: #d32f2f; border-color: #d32f2f; color: white; }
+.nav-circle.current.correct { background: #0e5c36; border-color: #0e5c36; }
+.nav-circle.current.wrong { background: #a12121; border-color: #a12121; }
+.nav-circle.current.unanswered { background: #d0d8e8; border-color: #b0bcd4; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>CÂU HỎI TRẮC NGHIỆM CHƯƠNG 4<br>DÂN CHỦ XÃ HỘI CHỦ NGHĨA VÀ NHÀ NƯỚC XÃ HỘI CHỦ NGHĨA</h1>
+<p id="counter">Câu 1 / 69</p>
+</div>
+<div class="progress-bar"><div id="progress"></div></div>
+<div class="card">
+<div id="qText" class="question-text"></div>
+<div id="options" class="options"></div>
+<div id="fb" class="feedback"></div>
+<div class="controls">
+<button id="resetBtn">Làm mới</button>
+<div style="display:flex; gap:12px;">
+<button id="submitBtn">Gửi đáp án</button>
+<button id="nextBtn" disabled>Câu tiếp theo</button>
+</div>
+</div>
+</div>
+<div id="resultBox" class="card"></div>
+</div>
+<div id="navPanel" class="nav-panel"></div>
+<script>
+const questions = [
+{ q: '“Dân chủ là dân là chủ và dân làm chủ” là quan điểm của', a: ['C. Mác.', 'Ph. Ăngghen.', 'V.I. Lênin', 'Hồ Chí Minh.'], c: 3 },
+{ q: 'Theo quan niệm từ thời cổ đại, dân chủ là', a: ['quyền bình đẳng tuyệt đối của con người.', 'quyền lực thuộc về nhân dân.', 'quyền lực thuộc về thiểu số người trong xã hội.', 'quyền tự do không giới hạn của mỗi người.'], c: 1 },
+{ q: 'Quan niệm nào sau đây không đúng về dân chủ?', a: ['Dân chủ là quyền tự do tuyệt đối của con người.', 'Dân chủ là một trong những nguyên tắc tổ chức quản lí nhà nước.', 'Dân chủ là một giá trị chung của nhân loại.', 'Dân chủ là một hình thái nhà nước.'], c: 0 },
+{ q: 'Theo quan niệm của chủ nghĩa Mác - Lênin, dân chủ phản ánh cuộc đấu tranh của nhân dân lao động chống lại áp bức, cường quyền, vì thế dân chủ được coi là một', a: ['yếu tố xã hội.', 'giá trị xã hội.', 'tổ chức xã hội.', 'thành phần xã hội.'], c: 1 },
+{ q: '"Quyền lực thuộc về nhân dân, nhân dân tự tổ chức và thực hiện trước hết và chủ yếu là thông qua nhà nước của mình" là nội dung của khái niệm nào dưới đây?', a: ['Bình đẳng.', 'Hạnh phúc.', 'Dân chủ.', 'Tự do.'], c: 2 },
+{ q: 'Nền dân chủ xuất hiện khi', a: ['Có xã hội loài người', 'Có nhà nước vô sản', 'Có nhà nước.', 'Có công cụ lao động'], c: 2 },
+{ q: 'Mức độ, phạm vi tham gia thật sự của quần chúng nhân dân vào công việc quản lí nhà nước phản ánh', a: ['cấu trúc của nền dân chủ.', 'trình độ phát triển của nền dân chủ.', 'quá trình đấu tranh giành dân chủ.', 'sự ra đời của nền dân chủ.'], c: 1 },
+{ q: 'Dân chủ có sự ra đời, tồn tại và phát triển trong một giai đoạn nhất định và sẽ mất đi khi trong xã hội không còn giai cấp, vì thế, dân chủ là một', a: ['yếu tố văn hóa.', 'thành phần của xã hội.', 'phạm trù giai cấp.', 'phạm trù lịch sử.'], c: 3 },
+{ q: 'Trên phương diện quyền lực, dân chủ là', a: ['một hình thức hay hình thái nhà nước.', 'một nguyên tắc - nguyên tắc dân chủ.', 'quyền lực thuộc về nhân dân.', 'một quan niệm - quan niệm về dân chủ, về tinh thần dân chủ.'], c: 2 },
+{ q: 'Trên phương diện chế độ xã hội và trong lĩnh vực chính trị, dân chủ là', a: ['một hình thức hay hình thái nhà nước.', 'quyền lực thuộc về nhân dân.', 'một nguyên tắc - nguyên tắc dân chủ.', 'một quan niệm - quan niệm về dân chủ, về tinh thần dân chủ.'], c: 0 },
+{ q: 'Trên phương diện tư tưởng, dân chủ là', a: ['quyền lực thuộc về nhân dân.', 'một hình thức hay hình thái nhà nước.', 'một quan niệm - quan niệm về dân chủ, về tinh thần dân chủ.', 'một nguyên tắc - nguyên tắc dân chủ.'], c: 2 },
+{ q: 'Trên phương diện tổ chức và quản lí xã hội, dân chủ là', a: ['quyền lực thuộc về nhân dân.', 'một nguyên tắc - nguyên tắc dân chủ.', 'một hình thức hay hình thái nhà nước.', 'một quan niệm - quan niệm về dân chủ, về tinh thần dân chủ.'], c: 1 },
+{ q: 'Câu nói: "Chế độ ta là chế độ dân chủ, tức là nhân dân là người chủ, mà chính phủ là người đầy tớ trung thành của nhân dân" là của ai?', a: ['Hồ Chí Minh.', 'Võ Nguyên Giáp.', 'Phạm Văn Đồng.', 'Nguyễn Phú Trọng.'], c: 0 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống để hoàn thiện khẳng định sau của Đảng Cộng sản Việt Nam: "Trong toàn bộ hoạt động của mình, Đảng phải quán triệt tư tưởng ....., xây dựng và phát huy quyền làm chủ của nhân dân lao động".', a: ['lấy dân làm nền tảng.', 'lấy dân làm đích.', 'lấy dân làm chỗ dựa.', 'lấy dân làm gốc.'], c: 3 },
+{ q: 'Trong chế độ cộng sản nguyên thuỷ đã xuất hiện hình thức manh nha của dân chủ mà Ph. Ăngghen gọi là', a: ['dân chủ công xã.', 'dân chủ sơ khai.', 'dân chủ nguyên thuỷ.', 'dân chủ cộng sản.'], c: 2 },
+{ q: 'Với tư cách là một hình thái nhà nước, một chế độ chính trị, lịch sử nhân loại có ba nền dân chủ là', a: ['dân chủ chủ nô, dân chủ phong kiến và dân chủ tư sản.', 'dân chủ chủ nô, dân chủ tư sản và dân chủ xã hội chủ nghĩa.', 'dân chủ nguyên thuỷ, dân chủ phong kiến và dân chủ tư sản.', 'dân chủ nguyên thuỷ, dân chủ tư sản và dân chủ xã hội chủ nghĩa.'], c: 1 },
+{ q: 'Hình thái kinh tế - xã hội nào dưới đây không có nền dân chủ?', a: ['Phong kiến.', 'Chiếm hữu nô lệ.', 'Tư bản chủ nghĩa.', 'Cộng sản chủ nghĩa.'], c: 0 },
+{ q: 'Nền dân chủ nào dưới đây là nền dân chủ rộng rãi nhất trong lịch sử?', a: ['Dân chủ cộng sản nguyên thuỷ.', 'Dân chủ chủ nô.', 'Dân chủ tư sản.', 'Dân chủ xã hội chủ nghĩa.'], c: 3 },
+{ q: 'Dân chủ xã hội chủ nghĩa là nền dân chủ mang bản chất của', a: ['giai cấp công nhân và đội ngũ trí thức', 'giai cấp công nhân.', 'giai cấp công nhân và giai cấp nông dân.', 'giai cấp tư sản và giai cấp tiểu tư sản.'], c: 1 },
+{ q: 'Dân chủ xã hội chủ nghĩa là nền dân chủ do', a: ['Đảng cầm quyền lãnh đạo.', 'Đảng của nhân dân lãnh đạo.', 'Đảng của giai cấp công nhân lãnh đạo.', 'Đảng của trí thức lãnh đạo.'], c: 2 },
+{ q: 'Nền dân chủ xã hội chủ nghĩa dựa trên hệ tư tưởng của giai cấp, tầng lớp nào sau đây?', a: ['Giai cấp nông dân.', 'Giai cấp tư sản.', 'Tầng lớp trí thức.', 'Giai cấp công nhân.'], c: 3 },
+{ q: 'Nền dân chủ cao hơn về chất so với nền dân chủ tư sản, ở đó mọi quyền lực thuộc về nhân dân, dân là chủ và dân làm chủ, dân chủ và pháp luật nằm trong sự thống nhất biện chứng; được thực hiện bằng Nhà nước pháp quyền xã hội chủ nghĩa, đặt dưới sự lãnh đạo của Đảng Cộng sản là nền dân chủ', a: ['nguyên thuỷ.', 'chủ nô.', 'phong kiến.', 'xã hội chủ nghĩa.'], c: 3 },
+{ q: 'Khái niệm "dân chủ xã hội chủ nghĩa" đồng nghĩa với thuật ngữ nào dưới đây?', a: ['Dân chủ nguyên thuỷ.', 'Dân chủ chủ nô.', 'Dân chủ vô sản.', 'Dân chủ tư sản.'], c: 2 },
+{ q: 'Nền dân chủ xã hội chủ nghĩa về cơ bản thống nhất với khái niệm nào dưới đây?', a: ['Chuyên chính vô sản.', 'Chủ nghĩa xã hội.', 'Xã hội xã hội chủ nghĩa.', 'Chính đảng của giai cấp công nhân.'], c: 0 },
+{ q: 'Không ngừng mở rộng dân chủ, nâng cao mức độ giải phóng cho những người lao động, thu hút họ tham gia tự giác vào công việc quản lí nhà nước, quản lí xã hội là', a: ['nguyên tắc cơ bản của nền dân chủ chủ nô.', 'nguyên tắc cơ bản của nền dân chủ xã hội chủ nghĩa.', 'nguyên tắc cơ bản của nền dân chủ tư sản.', 'nội dung cơ bản của nền dân chủ xã hội chủ nghĩa.'], c: 3 },
+{ q: 'Nền dân chủ xã hội chủ nghĩa trên thế giới chính thức được xác lập gắn với sự kiện nào sau đây?', a: ['Cách mạng tháng Mười Nga (1917).', 'Công xã Pari ra đời (1871).', 'Cách mạng tháng Hai Nga (1917).', 'Cách mạng tháng Tám ở Việt Nam (1945).'], c: 0 },
+{ q: 'Nội dung nào dưới đây không phải là đặc trưng cơ bản của nền dân chủ xã hội chủ nghĩa?', a: ['Đảm bảo quyền lực thuộc về nhân dân.', 'Có cơ sở kinh tế là chế độ công hữu về tư liệu sản xuất chủ yếu của xã hội.', 'Thực hiện dân chủ với mọi tầng lớp, mọi giai cấp trong xã hội.', 'Kết hợp hài hoà lợi ích cá nhân, tập thể và xã hội.'], c: 2 },
+{ q: 'Cơ sở kinh tế của nền dân chủ xã hội chủ nghĩa là', a: ['chế độ công hữu về những tư liệu sản xuất chủ yếu của xã hội.', 'nền kinh tế hàng hóa nhiều thành phần.', 'chế độ sở hữu tư nhân về tư liệu sản xuất.', 'nền kinh tế thị trường xã hội chủ nghĩa.'], c: 0 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống: Dân chủ xã hội chủ nghĩa là nền dân chủ ........ so với nền dân chủ tư sản, là nền dân chủ mà ở đó mọi quyền lực thuộc về nhân dân, ......, dân chủ và pháp luật nằm trong sự thống nhất biện chứng, được thực hiện bằng ........... , đặt dưới sự lãnh đạo của Đảng Cộng sản.', a: ['cao hơn về chất; dân là chủ và dân làm chủ; Nhà nước pháp quyền xã hội chủ nghĩa.', 'cao nhất; của dân, do dân, vì dân; quyền lực nhà nước.', 'tuyệt đối; dân bàn, dân làm, dân kiểm tra; Hiến pháp và pháp luật.', 'tuyệt đối; dân bàn, dân làm, dân kiểm tra; Hiến pháp và pháp luật.'], c: 0 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống để hoàn thiện nhận định trong tác phẩm Phê phán cương lĩnh Gôta: "Quyền không bao giờ có thể ở mức độ cao hơn chế độ ..... và sự phát triển văn hóa của xã hội do chế độ .... đó quyết định".', a: ['Kinh tế', 'Chính trị', 'Xã hội', 'Nhà nước'], c: 0 },
+{ q: 'Trong việc thực hiện quyền dân chủ trên lĩnh vực chính trị, công dân sẽ không thực hiện hành vi nào sau đây?', a: ['Ứng cử và bầu cử.', 'Kiểm tra, thanh tra mọi hoạt động của nhà nước.', 'Tham gia quản lí nhà nước.', 'Tham gia giám sát mọi hoạt động của nhà nước.'], c: 1 },
+{ q: '"Thực hành dân chủ là cái chìa khóa vạn năng có thể giải quyết mọi khó khăn" là câu nói của', a: ['V.I. Lênin.', 'Mao Trạch Đông.', 'Phạm Văn Đồng.', 'Hồ Chí Minh.'], c: 3 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống để hoàn thiện khẳng định của Đảng Cộng sản Việt Nam trong Cương lĩnh năm 1991: "Dân chủ gắn liền với ...... xã hội phải được thực hiện trong thực tế cuộc sống trên tất cả các lĩnh vực chính trị, kinh tế, văn hóa, xã hội thông qua hoạt động của Nhà nước do nhân dân cử ra và bằng các hình thức dân chủ...."', a: ['bình đẳng; trục tiếp.', 'công bằng; trực tiếp.', 'công bằng; gián tiếp.', 'bình đẳng; gián tiếp.'], c: 1 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống để hoàn thiện khẳng định của Đảng Cộng sản Việt Nam trong Cương lĩnh năm 1991: "Dân chủ đi đôi với .. , kỉ cương, phải được thể chế hóa bằng ..... và ...... bảo đảm".', a: ['kỉ luật; hiến pháp; hiến pháp.', 'kỉ luật; pháp luật; pháp luật.', 'đảm bảo; pháp luật; pháp luật.', 'đảm bảo; hiến pháp; hiến pháp.'], c: 1 },
+{ q: 'Nền dân chủ xã hội chủ nghĩa có sự kết hợp hài hoà về', a: ['quan điểm giữa cá nhân, tập thể với toàn xã hội.', 'lợi ích giữa cá nhân, tập thể với lợi ích của toàn xã hội.', 'văn hóa giữa cá nhân, tập thể với toàn xã hội.', 'nhận thức giữa cá nhân, tập thể với toàn xã hội.'], c: 1 },
+{ q: 'Chế độ dân chủ nhân dân ở nước ta được xác lập', a: ['sau khi Đảng Cộng sản Việt Nam ra đời năm 1930.', 'sau Cách mạng tháng Tám năm 1945.', 'sau chiến thắng Điện Biên Phủ năm 1954.', 'sau đại thắng mùa xuân năm 1975.'], c: 1 },
+{ q: 'Đảng Cộng sản Việt Nam khẳng định: "Trong toàn bộ hoạt động của mình, Đảng phải quán triệt tư tưởng "lấy dân làm gốc", xây dựng và phát huy quyền làm chủ của nhân dân lao động" trong Đại hội nào dưới đây?', a: ['Đại hội IV.', 'Đại hội V.', 'Đại hội VI.', 'Đại hội VII.'], c: 2 },
+{ q: 'Đảng Cộng sản Việt Nam khẳng định: "Chúng ta xác định mối quan hệ Đảng lãnh đạo, nhân dân làm chủ, nhà nước quản lí thành cơ chế chung trong quản lí toàn bộ xã hội" trong Đại hội nào dưới đây?', a: ['Đại hội VI.', 'Đại hội VIII.', 'Đại hội VII.', 'Đại hội IX.'], c: 2 },
+{ q: 'Định hướng nào dưới đây không phải là định hướng nhằm phát huy dân chủ xã hội chủ nghĩa ở Việt Nam?', a: ['Hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa, tạo ra cơ sở kinh tế vững chắc.', 'Xây dựng Đảng Cộng sản Việt Nam trong sạch, vững mạnh với tư cách là điều kiện tiên quyết để xây dựng nền dân chủ xã hội chủ nghĩa.', 'Phát huy vai trò của các tổ chức chính trị - xã hội bằng cách tách các tổ chức này ra ngoài hệ thống chính trị nhằm tăng tính độc lập của các tổ chức.', 'Xây dựng và từng bước hoàn thiện các hệ thống giám sát, phản biện xã hội, phát huy quyền làm chủ của nhân dân.'], c: 2 },
+{ q: 'Nguyên nhân nào dưới đây dẫn tới sự xuất hiện của nhà nước?', a: ['Sự xuất hiện chế độ tư bản chủ nghĩa và phân chia giai cấp.', 'Sự xuất hiện của chế độ phong kiến và phân chia giai cấp.', 'Sự xuất hiện của chế độ tư hữu và phân chia giai cấp.', 'Sự xuất hiện của chế độ xã hội chủ nghĩa và phân chia giai cấp.'], c: 2 },
+{ q: 'Căn cứ vào tính chất của quyền lực, nhà nước có chức năng nào dưới đây?', a: ['Chức năng đối nội và chức năng đối ngoại.', 'Chức năng quản lí kinh tế và quản lí chính trị.', 'Chức năng giai cấp và chức năng xã hội.', 'Chức năng lãnh đạo và chức năng giám sát.'], c: 2 },
+{ q: 'Căn cứ vào phạm vi tác động của quyền lực, nhà nước có chức năng nào dưới đây?', a: ['Chức năng quản lí kinh tế và quản lí chính trị.', 'Chức năng giai cấp và chức năng xã hội.', 'Chức năng lãnh đạo và chức năng giám sát.', 'Chức năng đối nội và chức năng đối ngoại.'], c: 3 },
+{ q: 'Căn cứ vào lĩnh vực tác động của quyền lực, nhà nước có', a: ['chức năng đối nội và chức năng đối ngoại.', 'chức năng giai cấp và chức năng xã hội.', 'chức năng lãnh đạo và chức năng giám sát.', 'chức năng chính trị, kinh tế, văn hóa.'], c: 3 },
+{ q: 'Trong xã hội có giai cấp, nhà nước luôn mang bản chất của', a: ['giai cấp có lực lượng đông đảo nhất.', 'giai cấp có trình độ cao nhất.', 'giai cấp thống trị xã hội.', 'giai cấp đại diện cho lực lượng sản xuất tiên tiến.'], c: 2 },
+{ q: 'Nhà nước tư sản mang bản chất của giai cấp', a: ['chủ nô.', 'địa chủ.', 'tư sản.', 'công nhân.'], c: 2 },
+{ q: 'Nhà nước xã hội chủ nghĩa mang bản chất của giai cấp', a: ['Công nhân.', 'Chủ nô.', 'Địa chủ.', 'Tư sản.'], c: 0 },
+{ q: 'Nhà nước xã hội chủ nghĩa vừa có tính nhân dân rộng rãi và tính dân tộc sâu sắc, vừa có bản chất của giai cấp', a: ['công nhân.', 'địa chủ.', 'tư sản.', 'chủ nô.'], c: 0 },
+{ q: 'Bản chất của nhà nước xã hội chủ nghĩa chịu sự quy định của cơ sở kinh tế xã hội chủ nghĩa, đó là', a: ['quan hệ sở hữu tư nhân về tư liệu sản xuất chủ yếu.', 'vừa quan hệ sở hữu tư nhân vừa quan hệ sở hữu xã hội về tư liệu sản xuất chủ yếu.', 'quan hệ sở hữu xã hội về tư liệu sản xuất chủ yếu.', 'chủ yếu là quan hệ sở hữu xã hội về tư liệu sản xuất.'], c: 2 },
+{ q: 'Về văn hóa, xã hội, nhà nước xã hội chủ nghĩa được xây dựng trên nền tảng tinh thần là', a: ['tư tưởng Hồ Chí Minh về chủ nghĩa xã hội.', 'lí luận của chủ nghĩa Mác - Lênin và những giá trị văn hóa tiên tiến của nhân loại, đồng thời mang bản sắc riêng của dân tộc.', 'tư tưởng Hồ Chí Minh về chủ nghĩa xã hội và những giá trị văn hóa tiên tiến của nhân loại, đồng thời mang bản sắc riêng của dân tộc.', 'lí luận của chủ nghĩa Mác - Lênin và những giá trị văn hóa tiên tiến của nhân loại.'], c: 1 },
+{ q: 'Nhà nước của giai cấp bóc lột thực hiện chức năng nào dưới đây là chủ yếu?', a: ['Chức năng đối nội.', 'Chức năng bạo lực trấn áp.', 'Chức năng đối ngoại.', 'Chức năng tổ chức, xây dựng.'], c: 1 },
+{ q: 'Nhà nước xã hội chủ nghĩa trong thời kì quá độ thực hiện chức năng bạo lực trấn áp, nhưng đó là sự trấn áp của', a: ['thiểu số bóc lột với nhân dân lao động.', 'nhân dân lao động đối với thiểu số bóc lột.', 'nhân dân lao động với lực lượng chậm tiến.', 'giai cấp bóc lột đối với thiểu số chậm tiến.'], c: 1 },
+{ q: 'Câu nói "Bất cứ một nhà nước nào cũng đều có nghĩa là dùng bạo lực; nhưng toàn bộ sự khác nhau là ở chỗ dùng bạo lực đối với những người bị bóc lột hay đối với kẻ đi bóc lột" là của', a: ['C. Mác.', 'Ph. Ăngghen.', 'V.I. Lênin.', 'Hồ Chí Minh.'], c: 2 },
+{ q: 'Nội dung chủ yếu và mục đích cuối cùng của nhà nước xã hội chủ nghĩa là', a: ['bạo lực trấn áp đối với thiểu số bóc lột.', 'bạo lực trấn áp đối với thiểu số bóc lột, cải tạo xã hội cũ.', 'cải tạo xã hội cũ, xây dựng thành công xã hội mới.', 'cải tạo xã hội cũ, đưa giai cấp công nhân lên địa vị làm chủ.'], c: 2 },
+{ q: 'Nhà nước mà ở đó sự thống trị chính trị thuộc về giai cấp công nhân, do cách mạng xã hội chủ nghĩa sản sinh ra và có sứ mệnh xây dựng thành công chủ nghĩa xã hội, đưa nhân dân lao động lên địa vị làm chủ trên tất cả các mặt của đời sống xã hội trong một xã hội phát triển cao là nhà nước', a: ['cộng sản chủ nghĩa.', 'tư sản.', 'phong kiến.', 'xã hội chủ nghĩa.'], c: 3 },
+{ q: 'Nhà nước xã hội chủ nghĩa hiện thực đầu tiên được thành lập ở', a: ['Trung Quốc.', 'Liên Xô.', 'Cu Ba.', 'Việt Nam.'], c: 1 },
+{ q: 'Đảng Cộng sản Việt Nam rút ra bốn bài học chủ yếu, trong đó có bài học: "Đổi mới phải dựa vào nhân dân, vì lợi ích của nhân dân, phù hợp với thực tiễn, luôn luôn sáng tạo" tại Đại hội nào dưới đây?', a: ['Đại hội VI (1986).', 'Đại hội VII (1991).', 'Đại hội IX (2001).', 'Đại hội VIII (1996).'], c: 0 },
+{ q: 'Thành tố dân chủ xã hội chủ nghĩa đã được đưa vào tên của chủ đề Đại hội nào của Đảng Cộng sản Việt Nam?', a: ['Đại hội VIII (1996).', 'Đại hội X (2006).', 'Đại hội XI (2011).', 'Đại hội XII (2016).'], c: 1 },
+{ q: 'Các quy chế dân chủ từ cơ sở cho đến Trung ương và trong các tổ chức chính trị - xã hội đều thực hiện phương châm', a: ['"dân biết, dân làm, dân kiểm tra".', '"dân biết, dân tham gia, dân làm, dân kiểm tra".', '"dân biết, dân bàn, dân làm, dân kiểm tra".', '"dân bàn, dân tham gia, dân kiểm tra".'], c: 2 },
+{ q: 'Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam được lãnh đạo bởi tổ chức, cơ quan nào dưới đây?', a: ['Quốc hội.', 'Mặt trận Tổ quốc.', 'Đảng Cộng sản Việt Nam.', 'Các tổ chức chính trị-xã hội.'], c: 2 },
+{ q: 'Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam là nhà nước', a: ['của dân, do dân, vì dân, do công nhân lãnh đạo.', 'của dân, do dân, vì dân, do Đảng Cộng sản Việt Nam lãnh đạo.', 'của dân, do dân, vì dân, do nông dân lãnh đạo.', 'có lợi ích giữa cá nhân, tập thể và lợi ích của toàn xã hội.'], c: 1 },
+{ q: 'Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam mang bản chất của giai cấp, tầng lớp nào sau đây?', a: ['Công nhân.', 'Công nhân và nông dân.', 'Nông dân và đội ngũ tri thức.', 'Tất cả các giai cấp, tầng lớp trong xã hội.'], c: 0 },
+{ q: 'Tổ chức nào dưới đây đóng vai trò trụ cột trong hệ thống chính trị ở nước ta hiện nay?', a: ['Nhà nước cộng hoà xã hội chủ nghĩa Việt Nam.', 'Đảng Cộng sản Việt Nam.', 'Mặt trận Tổ quốc.', 'Các tổ chức chính trị - xã hội.'], c: 0 },
+{ q: 'Quyền lực Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam là', a: ['thống nhất, không có sự phân công và phối hợp giữa ba cơ quan: lập pháp, hành pháp và tư pháp.', 'không thống nhất nhưng có sự phân công và phối hợp giữa ba cơ quan: lập pháp, hành pháp và tư pháp.', 'thống nhất, có sự phân công và phối hợp giữa ba cơ quan: lập pháp, hành pháp và tư pháp.', 'có sự phân chia độc lập, rõ ràng giữa ba cơ quan: lập pháp, hành pháp và tư pháp.'], c: 2 },
+{ q: 'Nội dung nào dưới đây không phải là định hướng nhằm tiếp tục xây dựng và hoàn thiện Nhà nước pháp quyền xã hội chủ nghĩa ở Việt Nam?', a: ['Cải cách thể chế và phương thức hoạt động của Nhà nước.', 'Xây dựng đội ngũ cán bộ, công chức trong sạch, có năng lực.', 'Đấu tranh phòng, chống tham nhũng, lãng phí, thực hành tiết kiệm.', 'Xây dựng Nhà nước pháp quyền xã hội chủ nghĩa đặt dưới sự lãnh đạo của nhân dân.'], c: 3 },
+{ q: 'Ở Việt Nam, thuật ngữ "Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam" lần đầu tiên được nêu ra ở', a: ['Đại hội đại biểu toàn quốc khóa VI của Đảng (1986).', 'Hội nghị đại biểu Trung ương 3 khóa VI (1989).', 'Hội nghị đại biểu toàn quốc giữa nhiệm kì khóa VII (1994).', 'Đại hội đại biểu toàn quốc khóa VII (1991).'], c: 2 },
+{ q: 'Điền từ ngữ thích hợp vào chỗ trống: "Nước ta là nước dân chủ, nghĩa là nước nhà do nhân dân làm chủ. Nhân dân có quyền lợi làm chủ, thì phải có ... làm tròn bổn phận công dân" (Hồ Chí Minh).', a: ['trách nhiệm.', 'nghĩa vụ.', 'trình độ để.', 'khả năng để.'], c: 1 },
+{ q: 'Nhà nước pháp quyền xã hội chủ nghĩa quản lí mọi mặt của đời sống xã hội chủ yếu bằng', a: ['đường lối, chính sách.', 'tuyên truyền, giáo dục.', 'báo chí, truyền thông.', 'hiến pháp, pháp luật.'], c: 3 },
+{ q: 'Mục tiêu nào dưới đây không phải là mục tiêu của Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam?', a: ['Phục vụ nhân dân, lắng nghe ý kiến của nhân dân.', 'Thực hiện đầy đủ các quyền làm chủ của nhân dân.', 'Gắn bó mật thiết với nhân dân.', 'Kiểm soát chặt chẽ mọi mặt đời sống của nhân dân.'], c: 3 },
+{ q: 'Yếu tố nào dưới đây là quan trọng nhất đối với việc phát huy quyền làm chủ của người dân?', a: ['Nâng cao đời sống văn hóa tinh thần cho người dân.', 'Nâng cao trình độ dân trí cho người dân.', 'Nâng cao đời sống vật chất của người dân.', 'Nâng cao bản lĩnh làm chủ cho người dân.'], c: 3 }
+];
+let currentIndex = 0;
+let score = 0;
+let selections = Array(questions.length).fill(null);
+let submitted = Array(questions.length).fill(false);
+function initQuiz() {
+currentIndex = 0; score = 0;
+selections = Array(questions.length).fill(null);
+submitted = Array(questions.length).fill(false);
+buildNavCircles();
+renderQuestion();
+document.getElementById("resultBox").style.display = "none";
+}
+function buildNavCircles() {
+  const panel = document.getElementById("navPanel");
+  panel.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const c = document.createElement("div");
+    c.className = "nav-circle unanswered";
+    c.textContent = i + 1;
+    c.dataset.index = i;
+    c.onclick = () => { currentIndex = +c.dataset.index; renderQuestion(); };
+    panel.appendChild(c);
+  }
+}
+function updateNavCircles() {
+  const circles = document.querySelectorAll(".nav-circle");
+  circles.forEach((c, i) => {
+    c.classList.remove("correct", "wrong", "unanswered", "current");
+    if (submitted[i]) {
+      c.classList.add(selections[i] === questions[i].c ? "correct" : "wrong");
+    } else {
+      c.classList.add("unanswered");
+    }
+    if (i === currentIndex) c.classList.add("current");
+  });
+}
+function renderQuestion() {
+const q = questions[currentIndex];
+document.getElementById("counter").innerText = `Câu ${currentIndex + 1} / ${questions.length}`;
+document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+document.getElementById("qText").innerText = q.q;
+const optionsDiv = document.getElementById("options");
+optionsDiv.innerHTML = "";
+q.a.forEach((opt, i) => {
+const div = document.createElement("div");
+div.className = "option";
+if (selections[currentIndex] === i) div.classList.add("selected");
+if (submitted[currentIndex]) {
+div.classList.add("disabled");
+if (i === q.c) div.classList.add("correct");
+if (selections[currentIndex] === i && i !== q.c) div.classList.add("wrong");
+}
+div.innerHTML = `<input type="radio" name="q" value="${i}" ${selections[currentIndex] === i ? 'checked' : ''}> <span>${String.fromCharCode(65 + i)}. ${opt}</span>`;
+div.onclick = () => { if (!submitted[currentIndex]) { selections[currentIndex] = i; renderQuestion(); } };
+optionsDiv.appendChild(div);
+});
+const fb = document.getElementById("fb");
+if (submitted[currentIndex]) {
+fb.style.display = "block";
+fb.style.background = selections[currentIndex] === q.c ? "#e8f5e9" : "#ffebee";
+fb.innerHTML = selections[currentIndex] === q.c ? "✅ Chính xác!" : `❌ Sai rồi! Đáp án đúng là <span class="correct-answer">${String.fromCharCode(65 + q.c)}</span>`;
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("nextBtn").disabled = false;
+} else {
+fb.style.display = "none";
+document.getElementById("submitBtn").disabled = false;
+document.getElementById("nextBtn").disabled = true;
+}
+  if (currentIndex === questions.length - 1 && submitted[currentIndex]) {
+    document.getElementById("nextBtn").innerText = "Xem kết quả";
+  } else {
+    document.getElementById("nextBtn").innerText = "Câu tiếp theo";
+  }
+  updateNavCircles();
+}
+document.getElementById("submitBtn").onclick = () => {
+  if (selections[currentIndex] === null) return alert("Vui lòng chọn đáp án!");
+  submitted[currentIndex] = true;
+  if (selections[currentIndex] === questions[currentIndex].c) {
+    score++;
+    document.getElementById("correctSound").play();
+  } else {
+    document.getElementById("wrongSound").play();
+  }
+  renderQuestion();
+};
+document.getElementById("nextBtn").onclick = () => {
+if (currentIndex < questions.length - 1) {
+currentIndex++;
+renderQuestion();
+} else {
+const rb = document.getElementById("resultBox");
+rb.style.display = "block";
+rb.innerHTML = `<h3>Hoàn thành!</h3><p style="font-size:20px;">Bạn đạt được <strong>${score} / ${questions.length}</strong> câu đúng (${((score/questions.length)*10).toFixed(2)} điểm).</p>`;
+window.scrollTo(0, document.body.scrollHeight);
+}
+};
+document.getElementById("resetBtn").onclick = () => { if(confirm("Làm mới toàn bộ câu hỏi?")) initQuiz(); };
+initQuiz();
+</script>
+<audio id="correctSound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrongSound" src="freesound_community-wrong-47985.mp3"></audio>
+</body>
+</html>

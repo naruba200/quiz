@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz Tư tưởng Hồ Chí Minh</title>
+<style>
+:root { --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5d6b82; --primary: #1b6ef3; --primary-dark: #0f4fb5; --ok: #16844f; --border: #dce4f3; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #ecf3ff 0%, #f8fbff 50%, #eefbf6 100%); color: var(--text); min-height: 100vh; padding: 24px; }
+.container { width: min(950px, 100%); margin: 0 auto; }
+.header { margin-bottom: 16px; text-align: center; }
+h1 { margin: 0; font-size: 24px; color: var(--primary-dark); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+#progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+.card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.question-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+.options { display: grid; gap: 12px; }
+.option { display: flex; align-items: center; padding: 14px 16px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+.option:hover:not(.disabled) { border-color: var(--primary); background: #f0f6ff; }
+.option.selected { border-color: var(--primary); background: #f0f6ff; font-weight: 600; }
+.option.correct { border-color: var(--ok); background: #e8f5e9; color: var(--ok); }
+.option.wrong { border-color: #d32f2f; background: #ffebee; color: #d32f2f; }
+.option input { display: none; }
+.controls { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
+button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 15px; }
+#submitBtn { background: var(--primary); color: white; }
+#nextBtn { background: var(--text); color: white; }
+#resetBtn { background: #e0e0e0; color: #444; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.feedback { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: 500; display: none; }
+.correct-answer { font-weight: bold; color: var(--ok); }
+#resultBox { display: none; margin-top: 24px; text-align: center; padding: 30px; border-radius: 12px; background: white; }
+.nav-panel {
+  position: fixed; top: 12px; right: 12px;
+  background: white; border-radius: 10px; padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+  max-width: 200px; max-height: 300px; overflow-y: auto;
+  z-index: 1000;
+}
+.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; color: var(--text); transition: all 0.15s; user-select: none; }
+.nav-circle:hover { transform: scale(1.15); }
+.nav-circle.correct { background: #16844f; border-color: #16844f; color: white; }
+.nav-circle.wrong { background: #d32f2f; border-color: #d32f2f; color: white; }
+.nav-circle.current.correct { background: #0e5c36; border-color: #0e5c36; }
+.nav-circle.current.wrong { background: #a12121; border-color: #a12121; }
+.nav-circle.current.unanswered { background: #d0d8e8; border-color: #b0bcd4; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>CÂU HỎI TRẮC NGHIỆM<br>TƯ TƯỞNG HỒ CHÍ MINH</h1>
+<p id="counter">Câu 1 / 36</p>
+</div>
+<div class="progress-bar"><div id="progress"></div></div>
+<div class="card">
+<div id="qText" class="question-text"></div>
+<div id="options" class="options"></div>
+<div id="fb" class="feedback"></div>
+<div class="controls">
+<button id="resetBtn">Làm mới</button>
+<div style="display:flex; gap:12px;">
+<button id="submitBtn">Gửi đáp án</button>
+<button id="nextBtn" disabled>Câu tiếp theo</button>
+</div>
+</div>
+</div>
+<div id="resultBox" class="card"></div>
+</div>
+<div id="navPanel" class="nav-panel"></div>
+<script>
+const questions = [
+{ q: "Theo Hồ Chí Minh, quan hệ sản xuất đặc trưng cho chủ nghĩa xã hội là gì?", a: ["Tất cả các phương án còn lại đều sai.", "Khoa học - kỹ thuật phát triển.", "Sở hữu xã hội về tư liệu sản xuất.", "Cơ cấu công - nông nghiệp hợp lý."], c: 2 },
+{ q: "Theo Hồ Chí Minh, muốn xây dựng chủ nghĩa xã hội ở Việt Nam cần thực hiện những nhiệm vụ nào?", a: ["Tất cả các phương án còn lại đều đúng.", "Xây dựng chế độ dân chủ.", "Xây dựng nền văn hóa, quan hệ xã hội mới, xóa bỏ các tàn tích của văn hóa, quan hệ lạc hậu.", "Xây dựng nền công nghiệp, nông nghiệp hiện đại."], c: 0 },
+{ q: "Tác phẩm nào sau đây không phải là của Hồ Chí Minh?", a: ["Tuyên ngôn của Đảng Cộng sản.", "Đường cách mệnh.", "Bản án chế độ thực dân Pháp.", "Tuyên ngôn độc lập."], c: 0 },
+{ q: "Hồ Chí Minh hình thành quan niệm về đặc trưng bản chất của chủ nghĩa xã hội từ cách tiếp cận nào?", a: ["Chủ nghĩa Mác - Lênin.", "Chủ nghĩa Mác - Lênin và thực tiễn xây dựng chủ nghĩa xã hội ở Việt Nam.", "Thực tiễn xây dựng chủ nghĩa xã hội ở Liên Xô.", "Thực tiễn xây dựng chủ nghĩa xã hội ở Việt Nam."], c: 1 },
+{ q: "Mối quan hệ giữa cách mạng giải phóng dân tộc ở các nước thuộc địa và cách mạng vô sản ở chính quốc theo quan điểm của Hồ Chí Minh là:", a: ["Cách mạng giải phóng dân tộc ở các nước thuộc địa và cách mạng vô sản ở chính quốc có mối quan hệ không bình đẳng, trong đó cách mạng vô sản ở chính quốc phụ thuộc hoàn toàn cách mạng giải phóng dân tộc ở các nước thuộc địa.", "Cách mạng giải phóng dân tộc ở các nước thuộc địa và cách mạng vô sản ở chính quốc có quan hệ khăng khít, tác động qua lại lẫn nhau - mối quan hệ bình đẳng, không lệ thuộc, phụ thuộc vào nhau.", "Cách mạng giải phóng dân tộc ở các nước thuộc địa và cách mạng vô sản ở chính quốc có quan hệ khăng khít, trong đó cách mạng giải phóng dân tộc ở các nước thuộc địa phụ thuộc hoàn toàn vào cách mạng vô sản ở chính quốc.", "Cách mạng giải phóng dân tộc ở các nước thuộc địa và cách mạng vô sản ở chính quốc có mối quan hệ chính - phụ."], c: 1 },
+{ q: "Hồ Chí Minh cho rằng, độc lập, tự do là:", a: ["Quyền thiêng liêng, bất khả xâm phạm của tất cả các dân tộc.", "Quyền lợi thiết thực nhất của tất cả các dân tộc.", "Quyền tối thiểu của mọi người dân trên thế giới.", "Quyền bất khả xâm phạm của các nước thuộc địa."], c: 0 },
+{ q: "Đâu là quan điểm của Hồ Chí Minh về cách mạng giải phóng dân tộc ?", a: ["Tất cả các phương án còn lại đều sai.", "Cách mạng giải phóng dân tộc giành thắng lợi đồng thời với thắng lợi cách mạng vô sản ở chính quốc.", "Cách mạng giải phóng dân tộc ở thuộc địa có khả năng giành được thắng lợi trước cách mạng vô sản ở chính quốc.", "Thắng lợi của cách mạng vô sản ở thuộc địa phải phụ thuộc vào thắng lợi của cách mạng vô sản ở chính quốc."], c: 2 },
+{ q: "Theo Hồ Chí Minh, đặc trưng nổi bật nhất về chính trị của chủ nghĩa xã hội là gì?", a: ["Đảng Cộng sản lãnh đạo.", "Thực hiện một nền dân chủ cho quảng đại nhân dân lao động.", "Mọi người được hưởng các quyền tự do, dân chủ.", "Giai cấp công nhân là chủ."], c: 1 },
+{ q: "Hồ Chí Minh cho rằng, cách mạng giải phóng dân tộc muốn thắng lợi phải đi theo con đường:", a: ["Cách mạng dân chủ tư sản.", "Cách mạng dân tộc.", "Cách mạng tư sản.", "Cách mạng vô sản."], c: 3 },
+{ q: "Các luận điểm của Hồ Chí Minh về độc lập dân tộc gắn liền với thống nhất và toàn vẹn lãnh thổ xuất hiện ở giai đoạn nào trong cuộc đời hoạt động cách mạng của Người?", a: ["Trong quá trình Hồ Chí Minh đi tìm đường cứu nước.", "Từ năm 1945 đến năm 1954 - khi thực dân Pháp âm mưu chia cắt Nam bộ.", "Từ năm 1954 đến năm 1969 - khi đất nước bị chia cắt làm hai miền.", "Xuyên suốt cuộc đời hoạt động cách mạng của Hồ Chí Minh."], c: 3 },
+{ q: "Trong những câu dưới đây, câu nào là của Hồ Chí Minh?", a: ["Tất cả các phương án còn lại đều đúng.", "Không có gì quý bằng độc lập, tự do.", "Không có gì quý hơn độc lập, tự do.", "Cay đắng chi bằng mất tự do."], c: 2 },
+{ q: "Trong Lời kêu gọi nhân ngày kỷ niệm độc lập (2/9/1948), Hồ Chí Minh khẳng định: \"Độc lập mà không có quân đội riêng, ngoại giao riêng, kinh tế riêng. Nhân dân Việt Nam quyết không thèm thứ thống nhất và độc lập giả hiệu ấy\" (Hồ Chí Minh: Toàn tập, Nxb. Chính trị Quốc gia - Sự thật, Hà Nội, 2011, t.5, tr.602). Câu nói trên thể hiện quan điểm của Hồ Chí Minh về độc lập dân tộc như thế nào?", a: ["Độc lập dân tộc gắn liền với thống nhất và toàn vẹn lãnh thổ.", "Độc lập dân tộc phải là nền độc lập thật sự, hoàn toàn và triệt để.", "Độc lập, tự do là quyền thiêng liêng, bất khả xâm phạm của tất cả các dân tộc.", "Độc lập dân tộc gắn liền với tự do và hạnh phúc của nhân dân."], c: 1 },
+{ q: "Hồ Chí Minh khẳng định: \"Ngày mà hàng trăm triệu nhân dân châu Á bị tàn sát và áp bức thức tỉnh để gạt bỏ sự bóc lột đê tiện của một bọn thực dân lòng tham không đáy, họ sẽ hình thành một lực lượng khổng lồ, và trong khi thủ tiêu một trong những điều kiện tồn tại của chủ nghĩa tư bản là chủ nghĩa đế quốc, họ có thể giúp đỡ những người anh em mình ở phương Tây trong nhiệm vụ giải phóng hoàn toàn\" (Hồ Chí Minh: Toàn tập, Nxb. Chính trị Quốc gia - Sự thật, 2011, t.1, tr.48). Câu trích trên thể hiện quan điểm gì của Hồ Chí Minh về cách mạng giải phóng dân tộc?", a: ["Cách mạng giải phóng dân tộc có khả năng giành thắng lợi trước cách mạng vô sản ở chính quốc.", "Tính sáng tạo của cách mạng giải phóng dân tộc ở các nước thuộc địa châu Á.", "Phương pháp thực hiện cách mạng giải phóng dân tộc ở các nước thuộc địa châu Á.", "Nhiệm vụ và phương pháp tiến hành cách mạng giải phóng dân tộc ở các nước thuộc địa châu Á."], c: 0 },
+{ q: "Chọn cụm từ đúng điền vào chỗ trống trong câu sau: \"Toàn quốc đồng bào hãy đứng dậy ... mà tự giải phóng cho ta\" (Trích: Thư kêu gọi tổng khởi nghĩa của Hồ Chí Minh ngày 18/8/1945).", a: ["đem sức ta", "dựa vào sự đoàn kết toàn dân", "dựa vào sự giúp đỡ quốc tế", "dưới sự lãnh đạo của Đảng"], c: 0 },
+{ q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc, trong điều kiện của Việt Nam, muốn thắng lợi phải do:", a: ["Giai cấp tư sản lãnh đạo.", "Đảng Cộng sản lãnh đạo.", "Liên minh giai cấp công nhân và nông dân lãnh đạo.", "Giai cấp nông dân lãnh đạo."], c: 1 },
+{ q: "Theo Hồ Chí Minh, ở Việt Nam và các nước thuộc địa cần tiến hành cuộc cách mạng nào trước?", a: ["Cách mạng giải phóng con người.", "Cách mạng xã hội chủ nghĩa.", "Cách mạng giải phóng dân tộc.", "Cách mạng giải phóng giai cấp."], c: 2 },
+{ q: "Theo Hồ Chí Minh, mục tiêu chủ nghĩa xã hội ở Việt Nam trên lĩnh vực văn hóa là:", a: ["Phải xây dựng được nền văn hóa phát triển cao dựa trên chế độ dân chủ, công bằng, văn minh.", "Phải xây dựng được nền văn hóa tiên tiến, đậm đà bản sắc dân tộc và tiếp thu tinh hoa văn hóa của nhân loại.", "Phải xây dựng được nền văn hóa và kinh tế phát triển cao gắn bó mật thiết với mục tiêu về chính trị.", "Phải xây dựng được nền văn hóa mang tính dân tộc, khoa học, đại chúng và tiếp thu tinh hoa văn hóa của nhân loại."], c: 3 },
+{ q: "Theo Hồ Chí Minh, cách mạng giải phóng dân tộc ở Việt Nam phải được tiến hành bằng phương pháp:", a: ["Cải cách dân chủ.", "Bạo lực cách mạng.", "Đấu tranh hòa bình.", "Đấu tranh cải lương."], c: 1 },
+{ q: "Trong bài phát biểu tại cuộc họp đầu tiên của Ủy ban nghiên cứu kế hoạch kiến quốc năm 1945, Hồ Chí Minh cho rằng: \"Chúng ta tranh được tự do, độc lập rồi mà dân cứ chết đói, chết rét, thì tự do, độc lập cũng không làm gì. Dân chỉ biết giá trị của tự do, của độc lập khi mà dân được ăn no, mặc đủ\" (Hồ Chí Minh: Toàn tập, Nxb. Chính trị Quốc gia - Sự thật, Hà Nội, 2011, t.4, tr.175). Câu nói trên của Hồ Chí Minh cho thấy độc lập dân tộc gắn liền với vấn đề gì?", a: ["Độc lập dân tộc gắn liền với thống nhất và toàn vẹn lãnh thổ.", "Độc lập dân tộc gắn liền với hòa bình.", "Độc lập dân tộc gắn liền với nền độc lập thật sự, hoàn toàn và triệt để.", "Độc lập dân tộc gắn liền với tự do và hạnh phúc của nhân dân."], c: 3 },
+{ q: "Trong tác phẩm Đường cách mệnh (năm 1927), Hồ Chí Minh đặt vấn đề: \"Cách mệnh trước hết phải có cái gì\" và Hồ Chí Minh giải thích:", a: ["\"Trước hết phải có một nước tiên tiến ủng hộ\".", "\"Trước hết phải có giai cấp công nhân\".", "\"Trước hết phải có đảng cách mệnh\".", "\"Trước hết phải có giai cấp lãnh đạo\"."], c: 2 },
+{ q: "Theo Hồ Chí Minh, đặc điểm đầy đủ nhất của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam là gì?", a: ["Công nghiệp chưa phát triển.", "Từ nước nông nghiệp lạc hậu tiến thẳng lên chủ nghĩa xã hội, không qua giai đoạn phát triển tư bản chủ nghĩa.", "Nông nghiệp lạc hậu.", "Không trải qua giai đoạn phát triển tư bản chủ nghĩa."], c: 1 },
+{ q: "Nhiệm vụ của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam theo tư tưởng Hồ Chí Minh là:", a: ["Không ngừng học tập và vận dụng sáng tạo chủ nghĩa Mác - Lênin cho phù hợp với điều kiện hoàn cảnh cụ thể của Việt Nam.", "Đấu tranh cải tạo, xóa bỏ tàn tích của chế độ xã hội cũ, xây dựng các yếu tố mới phù hợp với quy luật tiến lên chủ nghĩa xã hội trên tất cả các lĩnh vực của đời sống.", "Đoàn kết chặt chẽ với các dân tộc thuộc địa và bị áp bức, học tập kinh nghiệm của các nước xã hội chủ nghĩa anh em.", "Xây dựng một nước Việt Nam dân giàu, nước mạnh, dân chủ, công bằng, văn minh."], c: 1 },
+{ q: "Theo Hồ Chí Minh, trở lực kìm hãm sự phát triển của chủ nghĩa xã hội là gì?", a: ["Sự chia rẽ, bè phái, mất đoàn kết.", "Tất cả các phương án còn lại đều đúng.", "Chủ nghĩa cá nhân.", "Bệnh tham ô, lãng phí, quan liêu."], c: 1 },
+{ q: "Trong các luận điểm sau đây, luận điểm nào của Hồ Chí Minh?", a: ["\"Quyền tự nhiên của con người là quyền sống, quyền tự do, quyền tư hữu\".", "\"Tất cả các dân tộc trên thế giới đều sinh ra bình đẳng, dân tộc nào cũng có quyền sống, quyền sung sướng và quyền tự do\".", "\"Tất cả mọi người đều sinh ra bình đẳng. Tạo hóa cho họ những quyền không ai có thể xâm phạm được, trong những quyền ấy, có quyền được sống, quyền tự do và quyền mưu cầu hạnh phúc\".", "\"Người ta sinh ra tự do và bình đẳng về quyền lợi và phải luôn luôn được tự do và bình đẳng về quyền lợi\"."], c: 1 },
+{ q: "Quan điểm nào của Hồ Chí Minh thể hiện sự vận dụng sáng tạo học thuyết cách mạng vô sản của chủ nghĩa Mác - Lênin vào điều kiện cách mạng Việt Nam?", a: ["Giải phóng dân tộc gắn với giải phóng đất nước, trong đó giải phóng dân tộc là trước hết, trên hết; độc lập dân tộc gắn liền với chủ nghĩa xã hội.", "Giải phóng dân tộc gắn với giải phóng giai cấp, trong đó giải phóng dân tộc là trước hết, trên hết; độc lập dân tộc gắn liền với chủ nghĩa xã hội.", "Giải phóng dân tộc gắn với giải phóng người dân, trong đó giải phóng dân tộc là trước hết, trên hết; độc lập dân tộc gắn liền với chủ nghĩa xã hội.", "Giải phóng dân tộc gắn với giải phóng con người, trong đó giải phóng dân tộc là quan trọng nhất; độc lập dân tộc gắn liền với chủ nghĩa xã hội."], c: 1 },
+{ q: "Vận dụng tư tưởng Hồ Chí Minh về độc lập dân tộc và chủ nghĩa xã hội trong giai đoạn hiện nay, Việt Nam cần phải:", a: ["Kiên định mục tiêu và con đường cách mạng mà Hồ Chí Minh đã xác định; phát huy sức mạnh dân chủ xã hội chủ nghĩa.", "Đấu tranh chống những biểu hiện suy thoái về tư tưởng chính trị, đạo đức, lối sống và \"tự diễn biến\", \"tự chuyển hóa\" trong nội bộ.", "Tất cả các phương án còn lại.", "Củng cố, kiện toàn, phát huy sức mạnh và hiệu quả hoạt động của toàn bộ hệ thống chính trị."], c: 2 },
+{ q: "Trong các mục tiêu chủ nghĩa xã hội ở Việt Nam, mục tiêu nào mà trong đó Hồ Chí Minh khẳng định: Phải xây dựng được chế độ dân chủ.", a: ["Mục tiêu về kinh tế.", "Mục tiêu về chế độ chính trị.", "Mục tiêu về quan hệ xã hội.", "Mục tiêu về văn hóa."], c: 1 },
+{ q: "Vì sao Hồ Chí Minh cho rằng tính chất của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam là thời kỳ cải biến sâu sắc nhất nhưng phức tạp, lâu dài, khó khăn, gian khổ?", a: ["Vì đây là thời kỳ phải huy động sức mạnh của cả dân tộc chống kẻ thù ngoại xâm, giải phóng dân tộc nên rất khó khăn, không thể một sớm một chiều, không thể làm mau được mà phải làm dần dần.", "Vì đây là thời kỳ cải biến xã hội cũ thành xã hội mới - một xã hội chưa từng có trong lịch sử dân tộc ta, phải thay đổi nếp sống cũ, phải xóa bỏ giai cấp bóc lột, phải biến một nước dốt nát, cực khổ thành một nước văn hóa cao và đời sống tươi vui hạnh phúc.", "Vì đây là thời kỳ phải xây dựng được chế độ dân chủ, phải chống tất cả các biểu hiện của chủ nghĩa cá nhân, phải bồi dưỡng, giáo dục để nhân dân có tri thức, có năng lực làm chủ chế độ xã hội nên rất khó khăn, gian khổ.", "Vì đây là thời kỳ đất nước còn nghèo nàn, lạc hậu, chiến tranh tàn phá nặng nề, phải mất nhiều thời gian, công sức, nội lực và ngoại lực mới có thể thực hiện được."], c: 1 },
+{ q: "Theo Hồ Chí Minh, lực lượng xây dựng chủ nghĩa xã hội là ai?", a: ["Trí thức.", "Toàn dân.", "Nông dân.", "Công nhân."], c: 1 },
+{ q: "Đặc điểm lớn nhất của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam theo quan điểm của Hồ Chí Minh là:", a: ["Từ một nước nông nghiệp lạc hậu tiến thẳng lên chủ nghĩa xã hội, không trải qua giai đoạn phát triển tư bản chủ nghĩa.", "Từ một nước công nghiệp lạc hậu tiến thẳng lên chủ nghĩa xã hội, không trải qua giai đoạn phát triển tư bản chủ nghĩa.", "Từ một nước phong kiến lạc hậu tiến thẳng lên chủ nghĩa xã hội, không trải qua giai đoạn phát triển tư bản chủ nghĩa.", "Từ một nước nông nghiệp lạc hậu đi lên chủ nghĩa xã hội, trải qua giai đoạn phát triển tư bản chủ nghĩa."], c: 0 },
+{ q: "Theo Hồ Chí Minh kết hợp nhuần nhuyễn dân tộc với giai cấp, độc lập dân tộc và chủ nghĩa xã hội phản ánh cái gì?", a: ["Mối quan hệ giữa mục tiêu giải phóng dân tộc với giải phóng giai cấp, giải phóng con người.", "Tất cả các phương án.", "Mối quan hệ giữa mục tiêu trước mắt và muc tiêu lâu dài.", "Quy luật khách quan của cách mạng giải phóng dân tộc trong thời đại cách mạng vô sản."], c: 1 },
+{ q: "Khi viết bản \"Yêu sách của nhân dân An Nam\" gửi đến Hội nghị Vécxây, Nguyễn Tất Thành lấy tên mới là gì?", a: ["Nguyễn Ái Quốc.", "Văn Ba.", "Pôn Thành.", "Thầu Chín."], c: 0 },
+{ q: "Hồ Chí Minh đã dùng hình tượng nào dưới đây để chỉ chủ nghĩa tư bản?", a: ["Con bạch tuộc.", "Con chim đại bàng.", "Con đỉa hai vòi.", "Con rắn."], c: 2 },
+{ q: "Theo Hồ Chí Minh cách mạng giải phóng dân tộc có khả năng chủ động giành thắng lợi trước cách mạng vô sản ở chính quốc vì:", a: ["Tất cả các phương án còn lại.", "Kẻ thù ở thuộc địa yếu hơn kẻ thù của giai cấp vô sản ở chính quốc.", "Nọc độc và sức sống của con rắn độc tư bản chủ nghĩa tập trung ở các thuộc địa hơn ở các nước chính quốc.", "Lực lượng cách mạng ở thuộc địa đông và mạnh hơn lực lượng cách mạng ở chính quốc."], c: 2 },
+{ q: "Theo Hồ Chí Minh, muốn xây dựng xã hội chủ nghĩa, trước hết cần có gì?", a: ["Con người xã hội chủ nghĩa.", "Con người có tinh thần sáng tạo, dám nghĩ, dám làm.", "Con người có tài năng.", "Con người có đạo đức."], c: 0 },
+{ q: "Điều kiện để bảo đảm độc lập dân tộc gắn liền với chủ nghĩa xã hội theo quan điểm của Hồ Chí Minh là:", a: ["Phải thực hiện được mục tiêu dân giàu, nước mạnh, dân chủ, công bằng, văn minh; phải tiến hành công nghiệp hóa, hiện đại hóa và hội nhập quốc tế.", "Phải phát huy được sức mạnh khối đại đoàn kết toàn dân tộc và đoàn kết quốc tế; phải xây dựng thành công chế độ dân chủ nhân dân; phải phát triển đất nước trên tất cả các lĩnh vực; phải đoàn kết, gắn bó chặt chẽ với cách mạng thế giới.", "Phải giải phóng dân tộc, giành và bảo vệ được độc lập dân tộc; phải xây dựng thành công chế độ dân chủ nhân dân; phải phát triển đất nước trên tất cả các lĩnh vực.", "Phải bảo đảm vai trò lãnh đạo tuyệt đối của Đảng Cộng sản trong suốt tiến trình cách mạng; phải củng cố và tăng cường khối đại đoàn kết dân tộc mà nền tảng là khối liên minh công - nông; phải đoàn kết, gắn bó chặt chẽ với cách mạng thế giới."], c: 3 }
+];
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function shuffleQuestions() {
+  for (const q of questions) {
+    const idx = Array.from({ length: q.a.length }, (_, i) => i);
+    shuffleArray(idx);
+    const oldC = q.c;
+    q.a = idx.map(i => q.a[i]);
+    q.c = idx.indexOf(oldC);
+  }
+  shuffleArray(questions);
+}
+let currentIndex = 0;
+let score = 0;
+let selections = Array(questions.length).fill(null);
+let submitted = Array(questions.length).fill(false);
+function initQuiz() {
+shuffleQuestions();
+currentIndex = 0; score = 0;
+selections = Array(questions.length).fill(null);
+submitted = Array(questions.length).fill(false);
+buildNavCircles();
+renderQuestion();
+document.getElementById("resultBox").style.display = "none";
+}
+function buildNavCircles() {
+  const panel = document.getElementById("navPanel");
+  panel.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const c = document.createElement("div");
+    c.className = "nav-circle unanswered";
+    c.textContent = i + 1;
+    c.dataset.index = i;
+    c.onclick = () => { currentIndex = +c.dataset.index; renderQuestion(); };
+    panel.appendChild(c);
+  }
+}
+function updateNavCircles() {
+  const circles = document.querySelectorAll(".nav-circle");
+  circles.forEach((c, i) => {
+    c.classList.remove("correct", "wrong", "unanswered", "current");
+    if (submitted[i]) {
+      c.classList.add(selections[i] === questions[i].c ? "correct" : "wrong");
+    } else {
+      c.classList.add("unanswered");
+    }
+    if (i === currentIndex) c.classList.add("current");
+  });
+}
+function renderQuestion() {
+const q = questions[currentIndex];
+document.getElementById("counter").innerText = `Câu ${currentIndex + 1} / ${questions.length}`;
+document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+document.getElementById("qText").innerText = q.q;
+const optionsDiv = document.getElementById("options");
+optionsDiv.innerHTML = "";
+q.a.forEach((opt, i) => {
+const div = document.createElement("div");
+div.className = "option";
+if (selections[currentIndex] === i) div.classList.add("selected");
+if (submitted[currentIndex]) {
+div.classList.add("disabled");
+if (i === q.c) div.classList.add("correct");
+if (selections[currentIndex] === i && i !== q.c) div.classList.add("wrong");
+}
+div.innerHTML = `<input type="radio" name="q" value="${i}" ${selections[currentIndex] === i ? 'checked' : ''}> <span>${String.fromCharCode(65 + i)}. ${opt}</span>`;
+div.onclick = () => { if (!submitted[currentIndex]) { selections[currentIndex] = i; renderQuestion(); } };
+optionsDiv.appendChild(div);
+});
+const fb = document.getElementById("fb");
+if (submitted[currentIndex]) {
+fb.style.display = "block";
+fb.style.background = selections[currentIndex] === q.c ? "#e8f5e9" : "#ffebee";
+fb.innerHTML = selections[currentIndex] === q.c ? "✅ Chính xác!" : `❌ Sai rồi! Đáp án đúng là <span class="correct-answer">${String.fromCharCode(65 + q.c)}</span>`;
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("nextBtn").disabled = false;
+} else {
+fb.style.display = "none";
+document.getElementById("submitBtn").disabled = false;
+document.getElementById("nextBtn").disabled = true;
+}
+  if (currentIndex === questions.length - 1 && submitted[currentIndex]) {
+    document.getElementById("nextBtn").innerText = "Xem kết quả";
+  } else {
+    document.getElementById("nextBtn").innerText = "Câu tiếp theo";
+  }
+  updateNavCircles();
+}
+document.getElementById("submitBtn").onclick = () => {
+  if (selections[currentIndex] === null) return alert("Vui lòng chọn đáp án!");
+  submitted[currentIndex] = true;
+  if (selections[currentIndex] === questions[currentIndex].c) {
+    score++;
+    document.getElementById("correctSound").play();
+  } else {
+    document.getElementById("wrongSound").play();
+  }
+  renderQuestion();
+};
+document.getElementById("nextBtn").onclick = () => {
+if (currentIndex < questions.length - 1) {
+currentIndex++;
+renderQuestion();
+} else {
+const rb = document.getElementById("resultBox");
+rb.style.display = "block";
+rb.innerHTML = `<h3>Hoàn thành!</h3><p style="font-size:20px;">Bạn đạt được <strong>${score} / ${questions.length}</strong> câu đúng (${((score/questions.length)*10).toFixed(2)} điểm).</p>`;
+window.scrollTo(0, document.body.scrollHeight);
+}
+};
+document.getElementById("resetBtn").onclick = () => { if(confirm("Làm mới toàn bộ câu hỏi?")) initQuiz(); };
+initQuiz();
+</script>
+<audio id="correctSound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrongSound" src="freesound_community-wrong-47985.mp3"></audio>
+</body>
+</html>

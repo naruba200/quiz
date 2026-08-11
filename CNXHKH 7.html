@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz CNXH KH - Gia đình</title>
+<style>
+:root { --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5d6b82; --primary: #1b6ef3; --primary-dark: #0f4fb5; --ok: #16844f; --border: #dce4f3; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #ecf3ff 0%, #f8fbff 50%, #eefbf6 100%); color: var(--text); min-height: 100vh; padding: 24px; }
+.container { width: min(950px, 100%); margin: 0 auto; }
+.header { margin-bottom: 16px; text-align: center; }
+h1 { margin: 0; font-size: 24px; color: var(--primary-dark); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+#progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+.card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.question-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+.options { display: grid; gap: 12px; }
+.option { display: flex; align-items: center; padding: 14px 16px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+.option:hover:not(.disabled) { border-color: var(--primary); background: #f0f6ff; }
+.option.selected { border-color: var(--primary); background: #f0f6ff; font-weight: 600; }
+.option.correct { border-color: var(--ok); background: #e8f5e9; color: var(--ok); }
+.option.wrong { border-color: #d32f2f; background: #ffebee; color: #d32f2f; }
+.option input { display: none; }
+.controls { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
+button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 15px; }
+#submitBtn { background: var(--primary); color: white; }
+#nextBtn { background: var(--text); color: white; }
+#resetBtn { background: #e0e0e0; color: #444; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.feedback { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: 500; display: none; }
+.correct-answer { font-weight: bold; color: var(--ok); }
+#resultBox { display: none; margin-top: 24px; text-align: center; padding: 30px; border-radius: 12px; background: white; }
+.nav-panel {
+  position: fixed; top: 12px; right: 12px;
+  background: white; border-radius: 10px; padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+  max-width: 200px; max-height: 300px; overflow-y: auto;
+  z-index: 1000;
+}
+.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; color: var(--text); transition: all 0.15s; user-select: none; }
+.nav-circle:hover { transform: scale(1.15); }
+.nav-circle.correct { background: #16844f; border-color: #16844f; color: white; }
+.nav-circle.wrong { background: #d32f2f; border-color: #d32f2f; color: white; }
+.nav-circle.current.correct { background: #0e5c36; border-color: #0e5c36; }
+.nav-circle.current.wrong { background: #a12121; border-color: #a12121; }
+.nav-circle.current.unanswered { background: #d0d8e8; border-color: #b0bcd4; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>CÂU HỎI TRẮC NGHIỆM CHỦ ĐỀ GIA ĐÌNH<br>GIA ĐÌNH, HÔN NHÂN VÀ PHÁP LUẬT</h1>
+<p id="counter">Câu 1 / 71</p>
+</div>
+<div class="progress-bar"><div id="progress"></div></div>
+<div class="card">
+<div id="qText" class="question-text"></div>
+<div id="options" class="options"></div>
+<div id="fb" class="feedback"></div>
+<div class="controls">
+<button id="resetBtn">Làm mới</button>
+<div style="display:flex; gap:12px;">
+<button id="submitBtn">Gửi đáp án</button>
+<button id="nextBtn" disabled>Câu tiếp theo</button>
+</div>
+</div>
+</div>
+<div id="resultBox" class="card"></div>
+</div>
+<div id="navPanel" class="nav-panel"></div>
+<script>
+const questions = [
+{ q: 'Gia đình được hình thành bởi hai mối quan hệ cơ bản là', a: ['quan hệ hôn nhân và quan hệ huyết thống.', 'quan hệ họ hàng và quan hệ huyết thống.', 'quan hệ hôn nhân và quan hệ họ hàng.', 'quan hệ huyết thống và quan hệ xã hội.'], c: 0 },
+{ q: 'Quan hệ nền tảng hình thành nên các mối quan hệ khác trong gia đình, là cơ sở pháp lí cho sự tồn tại của mỗi gia đình là quan hệ', a: ['hôn nhân.', 'huyết thống.', 'họ hàng.', 'xã hội.'], c: 0 },
+{ q: 'Quan hệ giữa những người có cùng một dòng máu, nảy sinh từ quan hệ hôn nhân là quan hệ', a: ['họ hàng.', 'huyết thống.', 'nội tộc.', 'gia đình.'], c: 1 },
+{ q: 'Mối quan hệ tự nhiên, là yếu tố mạnh mẽ nhất gắn kết các thành viên trong gia đình với nhau là quan hệ', a: ['tình cảm.', 'huyết thống.', 'kinh tế.', 'hôn nhân.'], c: 1 },
+{ q: 'Quan hệ hôn nhân còn được gọi là quan hệ giữa', a: ['hai gia đình nhà trai và nhà gái.', 'vợ và chồng.', 'những người được pháp luật thừa nhận.', 'những người cùng chung sống trong một gia đình.'], c: 1 },
+{ q: 'Quan hệ huyết thống trong gia đình chính là quan hệ giữa', a: ['những người có họ hàng với nhau.', 'những người chung một dòng họ.', 'cha mẹ và con cái.', 'những người trong một gia đình.'], c: 2 },
+{ q: 'Nghĩa vụ, quyền lợi và trách nhiệm của mỗi thành viên trong gia đình được quy định bởi', a: ['đạo đức xã hội.', 'pháp luật của mỗi quốc gia.', 'pháp lí và đạo lí.', 'nền nếp gia đình.'], c: 1 },
+{ q: 'Quan hệ giữa cha mẹ nuôi với con nuôi chỉ được pháp luật công nhận khi', a: ['công bố rộng rãi với mọi người xung quanh.', 'đã làm lễ gia tiên, báo cáo với họ hàng.', 'có đầy đủ thủ tục pháp lí.', 'cả hai bên cha mẹ nuôi và con nuôi có nhu cầu sống cùng nhau.'], c: 2 },
+{ q: 'Một cộng đồng người sống chung trong một không gian xác định, thường được sử dụng ở góc độ quản lí nhân khẩu là nội dung thể hiện khái niệm', a: ['gia đình.', 'dòng tộc.', 'dân tộc.', 'hộ gia đình.'], c: 3 },
+{ q: 'Gia đình tập thể là hình thức gia đình tồn tại trong hình thái kinh tế - xã hội', a: ['phong kiến.', 'tư bản.', 'cộng sản chủ nghĩa.', 'công xã nguyên thuỷ.'], c: 3 },
+{ q: 'Gia đình mà những người chồng sống theo chế độ nhiều vợ, và vợ của họ cũng sống theo chế độ nhiều chồng, con cái là con chung của cả hai bên là đặc trưng của', a: ['gia đình hạt nhân.', 'gia đình nhiều thế hệ.', 'gia đình cá thể.', 'gia đình tập thể.'], c: 3 },
+{ q: 'Trong hình thức gia đình tập thể, việc xác định dòng dõi chủ yếu dựa vào', a: ['huyết thống của bố.', 'huyết thống của cả bố và mẹ.', 'huyết thống của tất cả những người bố và tất cả những người mẹ trong gia đình.', 'huyết thống của mẹ.'], c: 3 },
+{ q: 'Quyền thừa kế tài sản trong gia đình tập thể căn cứ vào huyết thống của người mẹ vì', a: ['không biết chính xác ai là cha đẻ của đứa con.', 'mẹ là người sinh ra con cái.', 'người phụ nữ có địa cao nhất trong gia đình.', 'người phụ nữ rất được tôn trọng.'], c: 0 },
+{ q: 'Đặc điểm nổi bật của gia đình tập thể là', a: ['mẫu quyền, dựa trên cơ sở kinh tế tập thể - kinh tế gia đình cộng sản.', 'phụ quyền, dựa trên cơ sở kinh tế tập thể - kinh tế gia đình cộng sản.', 'phụ quyền, dựa trên cơ sở kinh tế tư nhân.', 'mẫu quyền, dựa trên cơ sở kinh tế cá nhân.'], c: 0 },
+{ q: 'Sự xuất hiện của chế độ tư hữu và lao động của nam giới ngày càng được đề cao trong xã hội là nguyên nhân dẫn tới', a: ['gia đình tập thể.', 'gia đình cá thể.', 'gia đình nhiều thế hệ.', 'gia đình hai thế hệ.'], c: 1 },
+{ q: 'Theo quan điểm của C. Mác, Ph. Ăngghen: Gia đình một vợ một chồng dựa trên quyền thống trị của người chồng, nhằm chủ đích là làm cho con cái sinh ra phải có cha đẻ rõ ràng không ai tranh cãi được, và sự rõ ràng ấy là cần thiết, vì những người con đó sau này sẽ được hưởng tài sản của cha với tư cách là', a: ['người con chính thống.', 'người thừa kế trực tiếp.', 'người con nối dõi.', 'người thừa kế gián tiếp.'], c: 1 },
+{ q: 'Nội dung nào dưới đây không phản ánh đúng vị trí của gia đình trong xã hội?', a: ['Gia đình là tế bào của xã hội.', 'Gia đình là tổ ấm của mỗi thành viên.', 'Gia đình là bộ phận của làng xã.', 'Gia đình là cầu nối giữa cá nhân với xã hội.'], c: 2 },
+{ q: 'Nhận định nào dưới đây thể hiện đúng nhất vị trí của gia đình đối với sự vận động và phát triển của xã hội?', a: ['Gia đình có vai trò quan trọng đối với sự tồn tại, vận động và phát triển của xã hội.', 'Gia đình có vai trò không nhỏ đối với sự tồn tại, vận động và phát triển của xã hội.', 'Gia đình có vai trò quyết định đối với sự tồn tại, vận động và phát triển của xã hội.', 'Gia đình có vai trò nhất định đối với sự tồn tại, vận động và phát triển của xã hội.'], c: 0 },
+{ q: 'Gia đình không chỉ sản xuất ra tư liệu sinh hoạt mà còn sản xuất ra', a: ['bản thân con người.', 'các mối quan hệ xã hội.', 'các giá trị kinh tế.', 'các giá trị tinh thần.'], c: 0 },
+{ q: 'Gia đình như một tế bào tự nhiên, là một đơn vị cơ sở để tạo nên cơ thể - xã hội vì', a: ['gia đình sản xuất ra tư liệu tiêu dùng, tư liệu sản xuất và các mối quan hệ xã hội khác.', 'gia đình sản xuất ra tư liệu sản xuất, tái sản xuất ra con người và các mối quan hệ xã hội khác.', 'gia đình tái sản xuất ra con người và các mối quan hệ xã hội.', 'gia đình sản xuất ra tư liệu tiêu dùng, tư liệu sản xuất, tái sản xuất ra con người.'], c: 3 },
+{ q: 'Chủ tịch Hồ Chí Minh đã từng khẳng định: Hạt nhân của xã hội chính là', a: ['các thành viên trong gia đình.', 'gia đình.', 'các hộ gia đình.', 'hộ gia đình.'], c: 1 },
+{ q: 'Môi trường tốt nhất để mỗi cá nhân được yêu thương, nuôi dưỡng, chăm sóc, trưởng thành, phát triển là', a: ['gia đình.', 'nhà trường.', 'dòng họ.', 'làng xóm.'], c: 0 },
+{ q: 'Cộng đồng xã hội đầu tiên đáp ứng nhu cầu quan hệ xã hội của mỗi cá nhân là', a: ['làng xóm.', 'gia đình.', 'trường học.', 'họ hàng.'], c: 1 },
+{ q: 'Nội dung nào dưới đây không là chức năng cơ bản của gia đình?', a: ['Xây dựng quy định của địa phương.', 'Tái sản xuất ra con người.', 'Nuôi dưỡng, giáo dục.', 'Kinh tế và tổ chức tiêu dùng.'], c: 0 },
+{ q: 'Chức năng đặc thù của gia đình, không một cộng đồng nào có thể thay thế là', a: ['nuôi dưỡng, giáo dục.', 'kinh tế và tổ chức tiêu dùng.', 'tái sản xuất ra con người.', 'thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm.'], c: 2 },
+{ q: 'Không chỉ đáp ứng nhu cầu tâm - sinh lí tự nhiên của con người, đáp ứng nhu cầu nòi giống của gia đình, dòng họ mà còn đáp ứng nhu cầu về sức lao động và duy trì sự trường tồn của xã hội là nội dung thể hiện chức năng nào của gia đình?', a: ['Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Kinh tế và tổ chức tiêu dùng.', 'Nuôi dưỡng, giáo dục.', 'Tái sản xuất ra con người.'], c: 3 },
+{ q: 'Việc thực hiện chức năng tái sản xuất ra con người không chỉ là việc riêng của gia đình mà là vấn đề xã hội vì thực hiện chức năng này quyết định', a: ['quy mô dân số, mật độ dân cư, chất lượng nguồn lao động.', 'quy mô dân số, mật độ dân cư, chất lượng cuộc sống người lao động.', 'tỉ lệ gia tăng dân số, chất lượng nguồn lao động của mỗi quốc gia.', 'mật độ dân cư, chất lượng nguồn lao động của mỗi quốc gia.'], c: 0 },
+{ q: 'Chức năng nào dưới đây thể hiện tình cảm thiêng liêng, trách nhiệm của cha mẹ với con cái, đồng thời thể hiện trách nhiệm của gia đình với xã hội?', a: ['Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Nuôi dưỡng, giáo dục.', 'Kinh tế và tổ chức tiêu dùng.', 'Tái sản xuất ra con người.'], c: 1 },
+{ q: 'Chức năng nào dưới đây của gia đình có ý nghĩa rất quan trọng tới việc hình thành nhân cách, đạo đức, lối sống của mỗi người?', a: ['Nuôi dưỡng, giáo dục.', 'Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Kinh tế và tổ chức tiêu dùng.', 'Tái sản xuất ra con người.'], c: 0 },
+{ q: 'Gia đình thực hiện chức năng nào dưới đây để góp phần to lớn vào việc đào tạo thế hệ trẻ, nâng cao chất lượng nguồn lao động?', a: ['Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Kinh tế và tổ chức tiêu dùng.', 'Nuôi dưỡng, giáo dục.', 'Tái sản xuất ra con người.'], c: 2 },
+{ q: 'Thực hiện chức năng nào dưới đây của gia đình đòi hỏi cha mẹ phải có kiến thức cơ bản, tương đối toàn diện về mọi mặt?', a: ['Nuôi dưỡng, giáo dục.', 'Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Kinh tế và tổ chức tiêu dùng.', 'Tái sản xuất ra con người.'], c: 0 },
+{ q: 'Xét ở chức năng kinh tế và tổ chức tiêu dùng, gia đình có đặc thù nào dưới đây mà các đơn vị kinh tế khác không có được?', a: ['Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu lao động.', 'Tham gia vào quá trình sản xuất và tái sản xuất ra sức lao động.', 'Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu sản xuất.', 'Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu tiêu dùng.'], c: 3 },
+{ q: 'Việc sử dụng hợp lí các khoản thu nhập vào việc đảm bảo đời sống vật chất và tinh thần của mỗi thành viên, cùng với việc sử dụng quỹ thời gian rảnh rỗi để tạo nên đời sống tinh thần, thể chất lành mạnh là nội dung của chức năng', a: ['tổ chức tiêu dùng của gia đình.', 'tổ chức sản xuất của gia đình.', 'tổ chức đời sống tinh thần của gia đình.', 'tổ chức các mối quan hệ xã hội của gia đình.'], c: 0 },
+{ q: 'Gia đình đảm bảo nguồn sống, đáp ứng nhu cầu vật chất, tinh thần của các thành viên trong gia đình là nội dung của chức năng', a: ['đảm bảo đời sống vật chất và tinh thần.', 'thoả mãn mọi mặt đời sống gia đình.', 'kinh tế và tổ chức tiêu dùng.', 'nuôi dưỡng, giáo dục.'], c: 2 },
+{ q: 'Chức năng nào dưới đây tạo cho gia đình cơ sở để tổ chức tốt đời sống, nuôi dạy con cái, đóng góp to lớn đối với sự phát triển xã hội?', a: ['Đảm bảo đời sống gia đình và phát triển xã hội.', 'Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Kinh tế và tổ chức tiêu dùng.', 'Nuôi dưỡng, giáo dục.'], c: 2 },
+{ q: 'Chức năng nào dưới đây của gia đình có nhiệm vụ thoả mãn nhu cầu tình cảm, văn hóa, tinh thần cho các thành viên, đảm bảo sự cân bằng tâm lí, bảo vệ chăm sóc sức khoẻ người ốm, người già, trẻ em?', a: ['Thoả mãn nhu cầu tâm - sinh lí.', 'Thoả mãn nhu cầu tâm - sinh lí, duy trì tình cảm gia đình.', 'Thoả mãn nhu cầu tình cảm, đời sống vật chất.', 'Thoả mãn đời sống vật chất và tinh thần.'], c: 1 },
+{ q: 'Cơ sở kinh tế - xã hội để xây dựng gia đình trong thời kì quá độ lên chủ nghĩa xã hội là sự phát triển của', a: ['lực lượng sản xuất và quan hệ sản xuất xã hội chủ nghĩa.', 'nền kinh tế nhiều thành phần, định hướng xã hội chủ nghĩa.', 'nền kinh tế thị trường định hướng xã hội chủ nghĩa.', 'lực lượng sản xuất gắn với công cụ lao động hiện đại.'], c: 0 },
+{ q: 'Ý nào dưới đây là nguyên nhân sâu xa gây nên tình trạng thống trị của người đàn ông trong gia đình, sự bất bình đẳng nam nữ, giữa vợ và chồng, sự nô dịch với phụ nữ?', a: ['Chế độ công hữu về tư liệu sản xuất.', 'Chế độ đa thê.', 'Chế độ tư hữu về tư liệu sản xuất.', 'Chế độ một vợ một chồng.'], c: 2 },
+{ q: 'Sự thống trị của người đàn ông trong gia đình là kết quả của', a: ['sự thống trị của họ về văn hóa.', 'sự thống trị của họ về kinh tế.', 'những quy định trong gia đình.', 'những hủ tục lạc hậu.'], c: 1 },
+{ q: 'Việc thiết lập chính quyền nhà nước của giai cấp công nhân và nhân dân lao động nhằm xây dựng gia đình trong thời kì quá độ lên chủ nghĩa xã hội là nội dung của cơ sở', a: ['chính trị.', 'văn hóa.', 'xã hội.', 'kinh tế.'], c: 0 },
+{ q: 'Ở Việt Nam, tổ chức nào dưới đây là công cụ hữu hiệu nhất xoá bỏ những hủ tục lạc hậu, giải phóng phụ nữ và bảo vệ hạnh phúc gia đình?', a: ['Đảng Cộng sản.', 'Hội Liên hiệp Phụ nữ.', 'Nhà nước.', 'Đoàn Thanh niên Cộng sản.'], c: 2 },
+{ q: 'Nội dung nào dưới đây thể hiện rõ nhất vai trò của nhà nước xã hội chủ nghĩa trong việc đảm bảo lợi ích công dân, lợi ích của các thành viên trong gia đình, đảm bảo sự bình đẳng giới, chính sách dân số?', a: ['Phát triển kinh tế.', 'Ổn định tình hình chính trị - xã hội.', 'Xây dựng hệ thống pháp luật và nâng cao đời sống tinh thần.', 'Xây dựng hệ thống pháp luật và hệ thống chính sách xã hội.'], c: 3 },
+{ q: 'Phát triển lực lượng sản xuất và quan hệ sản xuất tương ứng - quan hệ sản xuất mới xã hội chủ nghĩa là cơ sở để xây dựng gia đình trong thời kì quá độ lên chủ nghĩa xã hội ở lĩnh vực nào dưới đây?', a: ['Chính trị - xã hội.', 'Văn hóa.', 'Kinh tế - xã hội.', 'Tâm lí.'], c: 2 },
+{ q: 'Hôn nhân tự nguyện, một vợ một chồng bình đẳng, được đảm bảo về pháp lí là biểu hiện của', a: ['chế độ hôn nhân tiến bộ.', 'hôn nhân được pháp luật thừa nhận.', 'hôn nhân tự nguyện.', 'hôn nhân bình đẳng.'], c: 0 },
+{ q: 'Hôn nhân tự nguyện là hôn nhân xuất phát từ', a: ['sự thoả mãn về kinh tế.', 'tình yêu.', 'sự đồng ý của bố mẹ hai bên.', 'sự ủng hộ của những người xung quanh.'], c: 1 },
+{ q: 'Nam nữ được đảm bảo quyền tự do trong việc lựa chọn người kết hôn là biểu hiện của', a: ['hôn nhân tự nguyện.', 'hôn nhân bình đẳng.', 'hôn nhân được pháp luật thừa nhận.', 'hôn nhân tích cực.'], c: 0 },
+{ q: 'Nguyên nhân nào sau đây giữ vai trò quyết định nhất tới sự xuất hiện của hôn nhân một vợ một chồng trong lịch sử xã hội loài người?', a: ['Sự thắng lợi của chế độ tư hữu đối với chế độ công hữu nguyên thuỷ.', 'Sự thắng lợi của những tư tưởng tiến bộ.', 'Sự xuất hiện của các tổ chức bảo vệ quyền lợi của người phụ nữ.', 'Vị trí, vai trò của người phụ nữ trong xã hội được thừa nhận.'], c: 0 },
+{ q: 'Vợ và chồng đều có quyền lợi và nghĩa vụ như nhau về mọi vấn đề của cuộc sống gia đình là biểu hiện của', a: ['hôn nhân tự nguyện.', 'vợ chồng bình đẳng.', 'tình yêu.', 'tự do kết hôn.'], c: 1 },
+{ q: 'Hôn nhân được đảm bảo về mặt pháp lí là hôn nhân', a: ['được tổ chức với sự chứng kiến của mọi người.', 'tự nguyện trên cơ sở tình yêu nam nữ.', 'được pháp luật thừa nhận thông qua việc đăng kí kết hôn.', 'được hai bên gia đình đồng ý.'], c: 2 },
+{ q: 'Yếu tố nào dưới đây giữ vai trò quyết định tới việc thúc đẩy tăng trưởng về kinh tế, tăng thu nhập của cá nhân, là cơ sở cho việc củng cố và duy trì bền vững của gia đình ở Việt Nam?', a: ['Trình độ dân trí ngày càng được nâng cao, nghề nghiệp ngày càng đa dạng.', 'Tình cảm gắn bó giữa các thành viên trong gia đình, mọi người đều có công việc ổn định.', 'Con cái được học hành đầy đủ, các thành viên đều được tạo điều kiện phát triển, cơ hội việc làm ngày càng cao.', 'Nền kinh tế thị trường định hướng xã hội chủ nghĩa ngày càng phát triển.'], c: 3 },
+{ q: 'Biểu hiện nào dưới đây không là tác động tiêu cực của kinh tế thị trường định hướng xã hội chủ nghĩa tới gia đình ở Việt Nam?', a: ['Tăng thu nhập của cá nhân trong gia đình.', 'Sự phân hóa giàu nghèo giữa các gia đình ngày càng tăng.', 'Ngoại tình, li hôn có chiều hướng ngày càng phát triển.', 'Trẻ em nghỉ học sớm, tham gia vào thị trường lao động.'], c: 0 },
+{ q: 'Nội dung nào dưới đây là mục tiêu về xây dựng gia đình mà Đại hội đại biểu toàn quốc lần thứ XII của Đảng Cộng sản Việt Nam đã đề ra?', a: ['Xây dựng gia đình no ấm, tiến bộ, hạnh phúc, văn minh.', 'Xây dựng gia đình hạnh phúc, kinh tế phát triển.', 'Xây dựng gia đình bình đẳng, hạnh phúc, no ấm, tiến bộ, văn minh.', 'Xây dựng gia đình ấm no, tự do, hạnh phúc.'], c: 0 },
+{ q: 'Nội dung nào dưới đây là mục tiêu mà “Chiến lược phát triển gia đình Việt Nam đến năm 2020, tầm nhìn 2030” đã đề ra?', a: ['Xây dựng gia đình Việt Nam no ấm, tiến bộ, hạnh phúc, thực sự là tổ ấm của mỗi người, là tế bào lành mạnh của xã hội.', 'Xây dựng gia đình Việt Nam kinh tế no ấm, văn minh, tiến bộ, hạnh phúc, thực sự là tổ ấm của mỗi người, là tế bào lành mạnh của xã hội.', 'Xây dựng gia đình Việt Nam bình đẳng, tiến bộ, hạnh phúc, thực sự là tổ ấm của mỗi người, là tế bào lành mạnh của xã hội.', 'Xây dựng gia đình Việt Nam no ấm, tiến bộ, hạnh phúc, thực sự là tổ ấm của mỗi người.'], c: 0 },
+{ q: 'Ngày Gia đình Việt Nam là ngày', a: ['28/5.', '26/6.', '28/6.', '26/8.'], c: 2 },
+{ q: 'Luật Hôn nhân và Gia đình ban hành năm 2000 ở Việt Nam được sửa đổi vào năm', a: ['2014.', '2007.', '2012.', '2015.'], c: 0 },
+{ q: 'Luật Phòng, chống bạo lực gia đình hiện hành của Việt Nam có hiệu lực thi hành năm', a: ['2006.', '2007.', '2008.', '2009.'], c: 2 },
+{ q: '“Gia đình đơn” còn được gọi bằng tên nào dưới đây?', a: ['Gia đình tập thể.', 'Gia đình hạt nhân.', 'Gia đình ba thế hệ.', 'Gia đình nhiều thế hệ.'], c: 1 },
+{ q: 'Gia đình có ba thế hệ cùng chung sống dưới một mái nhà được gọi là', a: ['tam đại đồng đường.', 'gia đình tập thể.', 'tứ đại đồng đường.', 'gia đình hạt nhân.'], c: 0 },
+{ q: 'Gia đình có bốn thế hệ cùng chung sống dưới một mái nhà được gọi là', a: ['tứ đại đồng đường.', 'gia đình hạt nhân.', 'tam đại đồng đường.', 'ngũ đại đồng đường.'], c: 0 },
+{ q: 'Quy mô gia đình Việt Nam hiện nay có xu hướng', a: ['ngày càng đa dạng.', 'ngày càng nhiều thế hệ.', 'ngày càng thu nhỏ.', 'ngày càng phức tạp.'], c: 2 },
+{ q: 'Loại hình gia đình phổ biến nhất ở Việt Nam hiện nay là', a: ['tam đại đồng đường.', 'gia đình hạt nhân.', 'tứ đại đồng đường.', 'gia đình đơn thân.'], c: 1 },
+{ q: 'Để đảm bảo lợi ích của gia đình và sự phát triển bền vững của xã hội, thông điệp mới trong kế hoạch hóa gia đình của Việt Nam hiện nay là', a: ['mỗi gia đình chỉ nên có từ 1 đến 2 con.', 'mỗi gia đình chỉ nên sinh 1 con.', 'mỗi gia đình nên sinh đủ 2 con.', 'gia đình có điều kiện nuôi dưỡng có thể sinh 3 con.'], c: 2 },
+{ q: 'Biểu hiện nào dưới đây thể hiện đầy đủ nhất sự tiến bộ trong việc thực hiện chức năng tái sản xuất ra con người của gia đình Việt Nam hiện nay?', a: ['Giảm mức sinh của phụ nữ, tăng số con mong muốn, không nhất định phải có con trai.', 'Giảm nhu cầu nhất thiết phải có con trai, người phụ nữ không nhất định phải sinh con.', 'Tăng số con mong muốn, giảm nhu cầu nhất thiết phải có con trai.', 'Giảm mức sinh của phụ nữ, giảm số con mong muốn, giảm nhu cầu nhất thiết phải có con trai.'], c: 3 },
+{ q: 'Từ một đơn vị kinh tế khép kín sản xuất để đáp ứng nhu cầu của gia đình thành đơn vị mà sản xuất chủ yếu để đáp ứng nhu cầu của người khác hay của xã hội là biểu hiện của sự biến đổi trong gia đình về chức năng', a: ['kinh tế và tổ chức tiêu dùng.', 'tổ chức tiêu dùng.', 'sản xuất.', 'chính trị - xã hội.'], c: 0 },
+{ q: 'Trong kinh tế thị trường hiện đại, nguyên nhân cơ bản nhất dẫn đến kinh tế gia đình gặp rất nhiều khó khăn, trở ngại trong việc chuyển hướng sản xuất kinh doanh hàng hóa theo hướng chuyên sâu là do', a: ['kinh tế gia đình phần lớn có quy mô nhỏ, lao động ít và tự sản xuất là chính.', 'trình độ của người lao động còn thấp, kinh tế gia đình quy mô lớn, khó quản lí.', 'người lao động vẫn mang tác phong nông nghiệp, tư duy tiểu nông, kinh nghiệm quản lí còn hạn chế.', 'cơ chế quản lí còn nhiều bất cập, thủ tục hành chính còn phức tạp.'], c: 0 },
+{ q: 'Nguyên nhân nào dưới đây giữ vai trò quyết định làm cho gia đình trở thành một đơn vị tiêu dùng quan trọng của xã hội?', a: ['Sự phát triển của kinh tế hàng hóa và nguồn thu nhập bằng tiền của gia đình ngày càng tăng lên.', 'Chi tiêu hợp lí, tăng cường tiết kiệm, nguồn thu nhập bằng tiền của gia đình ngày càng eo hẹp.', 'Hàng hóa ngày càng phong phú, đa dạng, đáp ứng tốt yêu cầu của người tiêu dùng.', 'Sản xuất hàng hóa phát triển, giao thương được đẩy mạnh, nguồn tiền cho chi dùng hàng ngày có chiều hướng tăng lên.'], c: 0 },
+{ q: 'Giáo dục trong gia đình Việt Nam hiện nay bao gồm giáo dục đạo đức, giáo dục kiến thức khoa học hiện đại, trang bị công cụ để con cái hoà nhập với thế giới là nội dung thể hiện tính chất nào trong nội dung giáo dục của gia đình Việt Nam hiện nay?', a: ['Tính toàn diện.', 'Tính lịch sử.', 'Tính logic.', 'Tính phiến diện.'], c: 0 },
+{ q: 'Nội dung nào dưới đây mô tả đầy đủ nhất về những hạn chế trong quan hệ quan hệ vợ chồng ở Việt Nam hiện nay?', a: ['Thiếu bình đẳng, vai trò của người phụ nữ chưa thực sự được thừa nhận.', 'Lỏng lẻo, gia tăng tỉ lệ li hôn, li thân, ngoại tình, chung sống không kết hôn.', 'Lỏng lẻo, bất bình đẳng trong quan hệ vợ, chồng vẫn diễn ra ở nhiều gia đình.', 'Lỏng lẻo, bạo lực gia đình ngày càng tăng, tỉ lệ li hôn ngày càng cao.'], c: 1 },
+{ q: 'Hiện nay, nguy cơ nào dưới đây là phổ biến nhất mà người cao tuổi trong gia đình ở Việt Nam phải đối mặt?', a: ['Thiếu thốn về vật chất.', 'Thiếu thốn về tình cảm.', 'Thiếu thốn về thời gian.', 'Thiếu thốn về các sản phẩm giải trí.'], c: 1 },
+{ q: 'Nội dung nào dưới đây không phải là phương hướng cơ bản xây dựng và phát triển gia đình Việt Nam trong thời kì quá độ lên chủ nghĩa xã hội?', a: ['Tăng cường sự lãnh đạo của Đảng, nâng cao nhận thức của xã hội về xây dựng và phát triển gia đình Việt Nam.', 'Đẩy mạnh phát triển kinh tế - xã hội, nâng cao đời sống vật chất, kinh tế hộ gia đình.', 'Tăng cường vai trò của các tổ chức quốc tế nhằm giáo dục thanh niên về xây dựng gia đình hạnh phúc.', 'Tiếp tục phát triển và nâng cao chất lượng phong trào xây dựng gia đình văn hóa.'], c: 2 },
+{ q: 'Gia đình ấm no, hoà thuận, tiến bộ, khoẻ mạnh và hạnh phúc, thực hiện tốt nghĩa vụ công dân, thực hiện kế hoạch hóa gia đình, đoàn kết tương trợ trong cộng đồng dân cư là tiêu chuẩn của', a: ['gia đình truyền thống.', 'gia đình giàu có.', 'gia đình văn hóa.', 'gia đình hiện đại.'], c: 2 }
+];
+let currentIndex = 0;
+let score = 0;
+let selections = Array(questions.length).fill(null);
+let submitted = Array(questions.length).fill(false);
+function initQuiz() {
+currentIndex = 0; score = 0;
+selections = Array(questions.length).fill(null);
+submitted = Array(questions.length).fill(false);
+buildNavCircles();
+renderQuestion();
+document.getElementById("resultBox").style.display = "none";
+}
+function buildNavCircles() {
+  const panel = document.getElementById("navPanel");
+  panel.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const c = document.createElement("div");
+    c.className = "nav-circle unanswered";
+    c.textContent = i + 1;
+    c.dataset.index = i;
+    c.onclick = () => { currentIndex = +c.dataset.index; renderQuestion(); };
+    panel.appendChild(c);
+  }
+}
+function updateNavCircles() {
+  const circles = document.querySelectorAll(".nav-circle");
+  circles.forEach((c, i) => {
+    c.classList.remove("correct", "wrong", "unanswered", "current");
+    if (submitted[i]) {
+      c.classList.add(selections[i] === questions[i].c ? "correct" : "wrong");
+    } else {
+      c.classList.add("unanswered");
+    }
+    if (i === currentIndex) c.classList.add("current");
+  });
+}
+function renderQuestion() {
+const q = questions[currentIndex];
+document.getElementById("counter").innerText = `Câu ${currentIndex + 1} / ${questions.length}`;
+document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+document.getElementById("qText").innerText = q.q;
+const optionsDiv = document.getElementById("options");
+optionsDiv.innerHTML = "";
+q.a.forEach((opt, i) => {
+const div = document.createElement("div");
+div.className = "option";
+if (selections[currentIndex] === i) div.classList.add("selected");
+if (submitted[currentIndex]) {
+div.classList.add("disabled");
+if (i === q.c) div.classList.add("correct");
+if (selections[currentIndex] === i && i !== q.c) div.classList.add("wrong");
+}
+div.innerHTML = `<input type="radio" name="q" value="${i}" ${selections[currentIndex] === i ? 'checked' : ''}> <span>${String.fromCharCode(65 + i)}. ${opt}</span>`;
+div.onclick = () => { if (!submitted[currentIndex]) { selections[currentIndex] = i; renderQuestion(); } };
+optionsDiv.appendChild(div);
+});
+const fb = document.getElementById("fb");
+if (submitted[currentIndex]) {
+fb.style.display = "block";
+fb.style.background = selections[currentIndex] === q.c ? "#e8f5e9" : "#ffebee";
+fb.innerHTML = selections[currentIndex] === q.c ? "✅ Chính xác!" : `❌ Sai rồi! Đáp án đúng là <span class="correct-answer">${String.fromCharCode(65 + q.c)}</span>`;
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("nextBtn").disabled = false;
+} else {
+fb.style.display = "none";
+document.getElementById("submitBtn").disabled = false;
+document.getElementById("nextBtn").disabled = true;
+}
+  if (currentIndex === questions.length - 1 && submitted[currentIndex]) {
+    document.getElementById("nextBtn").innerText = "Xem kết quả";
+  } else {
+    document.getElementById("nextBtn").innerText = "Câu tiếp theo";
+  }
+  updateNavCircles();
+}
+document.getElementById("submitBtn").onclick = () => {
+  if (selections[currentIndex] === null) return alert("Vui lòng chọn đáp án!");
+  submitted[currentIndex] = true;
+  if (selections[currentIndex] === questions[currentIndex].c) {
+    score++;
+    document.getElementById("correctSound").play();
+  } else {
+    document.getElementById("wrongSound").play();
+  }
+  renderQuestion();
+};
+document.getElementById("nextBtn").onclick = () => {
+if (currentIndex < questions.length - 1) {
+currentIndex++;
+renderQuestion();
+} else {
+const rb = document.getElementById("resultBox");
+rb.style.display = "block";
+rb.innerHTML = `<h3>Hoàn thành!</h3><p style="font-size:20px;">Bạn đạt được <strong>${score} / ${questions.length}</strong> câu đúng (${((score/questions.length)*10).toFixed(2)} điểm).</p>`;
+window.scrollTo(0, document.body.scrollHeight);
+}
+};
+document.getElementById("resetBtn").onclick = () => { if(confirm("Làm mới toàn bộ câu hỏi?")) initQuiz(); };
+initQuiz();
+</script>
+<audio id="correctSound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrongSound" src="freesound_community-wrong-47985.mp3"></audio>
+</body>
+</html>

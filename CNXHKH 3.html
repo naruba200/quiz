@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz CNXH KH - Chương 3</title>
+<style>
+:root { --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5d6b82; --primary: #1b6ef3; --primary-dark: #0f4fb5; --ok: #16844f; --border: #dce4f3; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #ecf3ff 0%, #f8fbff 50%, #eefbf6 100%); color: var(--text); min-height: 100vh; padding: 24px; }
+.container { width: min(950px, 100%); margin: 0 auto; }
+.header { margin-bottom: 16px; text-align: center; }
+h1 { margin: 0; font-size: 24px; color: var(--primary-dark); }
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+#progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+.card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.question-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+.options { display: grid; gap: 12px; }
+.option { display: flex; align-items: center; padding: 14px 16px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+.option:hover:not(.disabled) { border-color: var(--primary); background: #f0f6ff; }
+.option.selected { border-color: var(--primary); background: #f0f6ff; font-weight: 600; }
+.option.correct { border-color: var(--ok); background: #e8f5e9; color: var(--ok); }
+.option.wrong { border-color: #d32f2f; background: #ffebee; color: #d32f2f; }
+.option input { display: none; }
+.controls { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
+button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 15px; }
+#submitBtn { background: var(--primary); color: white; }
+#nextBtn { background: var(--text); color: white; }
+#resetBtn { background: #e0e0e0; color: #444; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.feedback { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: 500; display: none; }
+.correct-answer { font-weight: bold; color: var(--ok); }
+#resultBox { display: none; margin-top: 24px; text-align: center; padding: 30px; border-radius: 12px; background: white; }
+.nav-panel {
+  position: fixed; top: 12px; right: 12px;
+  background: white; border-radius: 10px; padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 6px;
+  max-width: 200px; max-height: 300px; overflow-y: auto;
+  z-index: 1000;
+}
+.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; color: var(--text); transition: all 0.15s; user-select: none; }
+.nav-circle:hover { transform: scale(1.15); }
+.nav-circle.correct { background: #16844f; border-color: #16844f; color: white; }
+.nav-circle.wrong { background: #d32f2f; border-color: #d32f2f; color: white; }
+.nav-circle.current.correct { background: #0e5c36; border-color: #0e5c36; }
+.nav-circle.current.wrong { background: #a12121; border-color: #a12121; }
+.nav-circle.current.unanswered { background: #d0d8e8; border-color: #b0bcd4; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>CÂU HỎI TRẮC NGHIỆM CHƯƠNG 3<br>CHỦ NGHĨA XÃ HỘI VÀ THỜI KÌ QUÁ ĐỘ LÊN CHỦ NGHĨA XÃ HỘI</h1>
+<p id="counter">Câu 1 / 50</p>
+</div>
+<div class="progress-bar"><div id="progress"></div></div>
+<div class="card">
+<div id="qText" class="question-text"></div>
+<div id="options" class="options"></div>
+<div id="fb" class="feedback"></div>
+<div class="controls">
+<button id="resetBtn">Làm mới</button>
+<div style="display:flex; gap:12px;">
+<button id="submitBtn">Gửi đáp án</button>
+<button id="nextBtn" disabled>Câu tiếp theo</button>
+</div>
+</div>
+</div>
+<div id="resultBox" class="card"></div>
+</div>
+<div id="navPanel" class="nav-panel"></div>
+<script>
+const questions = [
+{ q: "Cách hiểu nào dưới đây không đúng về chủ nghĩa xã hội?", a: ["Là một phong trào thực tiễn, phong trào đấu tranh của nhân dân lao động chống các giai cấp thống trị.", "Là trào lưu tư tưởng, lí luận phản ánh lí tưởng giải phóng nhân dân lao động khỏi áp bức, bóc lột, bất công.", "Là một chế độ xã hội hiện thực tốt đẹp, giai đoạn đầu của hình thái kinh tế - xã hội cộng sản chủ nghĩa.", "Là một khoa học nghiên cứu về những quy luật chung nhất của tự nhiên, xã hội và tư duy."], c: 3 },
+{ q: "Tác phẩm Phê phán cương lĩnh Gôta của", a: ["Ph. Ăngghen.", "C. Mác và Ph. Ăngghen.", "C. Mác.", "V.I. Lênin."], c: 2 },
+{ q: "Điền từ ngữ thích hợp vào chỗ trống: \"Giữa xã hội tư bản chủ nghĩa và xã hội cộng sản chủ nghĩa là một thời kì cải biến cách mạng từ xã hội nọ sang xã hội kia. Thích ứng với thời kì ấy là một ..... chính trị, và nhà nước của thời kì ấy không thể là cái gì khác hơn là nền chuyên chính cách mạng của giai cấp vô sản\" (C. Mác).", a: ["giai đoạn.", "thời kì quá độ.", "hình thái.", "thể chế."], c: 1 },
+{ q: "Điền từ ngữ thích hợp vào chỗ trống: Lênin cho rằng: \"về lí luận, không thể nghi ngờ gì được rằng giữa chủ nghĩa tư bản và chủ nghĩa cộng sản, có một................................nhất định\".", a: ["thời kì cách mạng.", "thời kì chuyển giao.", "thời kì cải biến", "thời kì quá độ."], c: 3 },
+{ q: "Từ thực tiễn nước Nga, V.I. Lênin cho rằng: Đối với những nước chưa có chủ nghĩa tư bản phát triển cao, cần phải có một thời kì quá độ", a: ["khá nhanh chóng từ chủ nghĩa tư bản lên chủ nghĩa xã hội.", "khá lâu dài từ chủ nghĩa tư bản lên chủ nghĩa xã hội.", "rất nhanh từ chủ nghĩa tư bản lên chủ nghĩa xã hội.", "rất lâu dài và gian khổ từ chủ nghĩa tư bản lên chủ nghĩa xã hội."], c: 3 },
+{ q: "Theo các nhà sáng lập chủ nghĩa xã hội khoa học, quá độ lên chủ nghĩa xã hội có hai hình thức là", a: ["nhanh và chậm.", "đơn giản và phức tạp.", "trực tiếp và gián tiếp.", "sớm và muộn."], c: 2 },
+{ q: "Điền từ ngữ thích hợp vào chỗ trống: Lênin viết: \"Với sự giúp đỡ của giai cấp vô sản các nước tiên tiến, các nước lạc hậu có thể tiến tới chế độ Xô viết, và qua những giai đoạn phát triển nhất định, tiến tới chủ nghĩa cộng sản, không phải trải qua .... phát triển tư bản chủ nghĩa\".", a: ["chế độ.", "giai đoạn.", "quá trình.", "hình thức."], c: 1 },
+{ q: "Nội dung nào dưới đây không phải là điều kiện dẫn tới sự ra đời của chủ nghĩa xã hội?", a: ["Sự phát triển của lực lượng sản xuất.", "Mong muốn chủ quan của giai cấp công nhân.", "Sự trưởng thành của giai cấp công nhân.", "Quan hệ sản xuất tư bản chủ nghĩa trở nên lỗi thời."], c: 1 },
+{ q: "Giải phóng giai cấp, giải phóng dân tộc, giải phóng xã hội, giải phóng con người, tạo điều kiện để con người phát triển toàn diện là đặc trưng của", a: ["Chủ nghĩa tư bản.", "Xã hội phong kiến.", "Chủ nghĩa xã hội.", "Xã hội chiếm hữu nô lệ."], c: 2 },
+{ q: "Đặc trưng nào dưới đây thể hiện sự khác biệt về CHẤT giữa chủ nghĩa xã hội với các chế độ xã hội khác?", a: ["Có quan hệ sản xuất phù hợp với lực lượng sản xuất.", "Là chế độ giải phóng giai cấp, giải phóng dân tộc, giải phóng xã hội, giải phóng con người.", "Có nền văn hóa phát triển cao, kế thừa và phát huy những giá trị của văn hóa dân tộc và tinh hoa văn hóa nhân loại.", "Bảo đảm, đoàn kết giữa các dân tộc."], c: 1 },
+{ q: "Nội dung nào dưới đây là đặc trưng về phương diện kinh tế của chủ nghĩa xã hội?", a: ["Có nền kinh tế phát triển cao dựa trên lực lượng sản xuất hiện đại và chế độ công hữu về tư liệu sản xuất.", "Phát triển lực lượng sản xuất, đẩy mạnh công nghiệp hóa, hiện đại hóa.", "Có nền kinh tế phát triển cao dựa trên lực lượng sản xuất hiện đại và chế độ công hữu về tư liệu sản xuất chủ yếu.", "Xác lập chế độ công hữu về tư liệu sản xuất, tổ chức lao động theo trình độ cao hơn."], c: 2 },
+{ q: "Khi phân tích về thời kì quá độ lên chủ nghĩa xã hội, người đầu tiên đặt vấn đề phải học tập các kinh nghiệm tổ chức, quản lí kinh tế của chủ nghĩa tư bản để cải tạo nền kinh tế tiểu nông lạc hậu là", a: ["C. Mác.", "V.I. Lênin.", "Ph. Ăngghen.", "Hồ Chí Minh."], c: 1 },
+{ q: "Ai là người đưa ra quan điểm: \"Trong một nước tiểu nông, trước hết các đồng chí phải bắc những chiếc cầu nhỏ vững chắc, đi xuyên qua chủ nghĩa tư bản nhà nước, tiến lên chủ nghĩa xã hội\"?", a: ["C. Mác.", "Ph. Ăngghen.", "Hồ Chí Minh.", "V.I. Lênin."], c: 3 },
+{ q: "Ai cho rằng: \"Dùng cả hai tay mà lấy những cái tốt của nước ngoài: Chính quyền Xô viết + trật tự ở đường sắt Phổ + kĩ thuật và cách tổ chức các tơ-rớt ở Mỹ + ngành giáo dục quốc dân Mỹ etc. etc.++ = Σ (tổng số) = chủ nghĩa xã hội\"?", a: ["C. Mác.", "Ph. Ăngghen.", "V.I. Lênin.", "Hồ Chí Minh."], c: 2 },
+{ q: "Trong chế độ xã hội chủ nghĩa, nhà nước mang bản chất của giai cấp, tầng lớp nào dưới đây?", a: ["Nhân dân lao động.", "Tầng lớp trí thức.", "Giai cấp công nhân.", "Giai cấp tư sản."], c: 2 },
+{ q: "Nhà nước kiểu mới thực hiện dân chủ cho tuyệt đại đa số nhân dân và trấn áp bọn bóc lột, bọn áp bức nhân dân bằng vũ lực là", a: ["nhà nước chiếm hữu nô lệ.", "nhà nước phong kiến.", "nhà nước vô sản.", "nhà nước tư sản."], c: 2 },
+{ q: "\"Người ta chỉ có thể trở thành người cộng sản khi biết làm giàu trí óc của mình bằng sự hiểu biết tất cả những kho tàng tri thức mà nhân loại đã tạo ra\" là câu nói của", a: ["V.I. Lênin.", "C. Mác.", "Ph. Ăngghen.", "Hồ Chí Minh."], c: 0 },
+{ q: "Người đầu tiên đưa chủ nghĩa xã hội từ lí thuyết thành thực tiễn sinh động là", a: ["C. Mác.", "V.I. Lênin.", "I.V. Stalin.", "Hồ Chí Minh."], c: 1 },
+{ q: "Ai là người đưa ra tư tưởng độc lập dân tộc gắn liền với chủ nghĩa xã hội?", a: ["V.I. Lênin.", "Đặng Tiểu Bình.", "Phạm Văn Đồng.", "Hồ Chí Minh."], c: 3 },
+{ q: "Câu nói: \"Chủ nghĩa xã hội hay là chết\" là của", a: ["V.I. Lênin.", "Fidel Castro.", "Hồ Chí Minh.", "Đặng Tiểu Bình."], c: 1 },
+{ q: "Điền từ ngữ thích hợp để hoàn thành đoạn trích trong tác phẩm Hệ tư tưởng Đức của C. Mác: \"Đối với chúng ta, chủ nghĩa cộng sản không phải là một ..... cần phải sáng tạo ra, không phải là một.......... mà hiện thực phải khuôn theo. Chúng ta gọi chủ nghĩa cộng sản là một phong trào .......... nó xoá bỏ trạng thái hiện nay\".", a: ["lí tưởng, trạng thái, hiện thực.", "trạng thái, hiện thực, lí tưởng.", "trạng thái, lí tưởng, hiện thực.", "hiện thực, lí tưởng, trạng thái."], c: 2 },
+{ q: "Điền từ thích hợp vào chỗ trống: \"Vậy thì danh từ.........có nghĩa là gì? Vận dụng vào kinh tế, có phải nó có nghĩa là trong chế độ hiện nay có những thành phần, những bộ phận, những mảnh của cả chủ nghĩa tư bản lẫn chủ nghĩa xã hội? Bất cứ ai cũng đều thừa nhận là có\" (V.I. Lênin).", a: ["quá độ.", "nhảy vọt.", "phát triển.", "đan xen."], c: 0 },
+{ q: "Nội dung nào dưới đây là đặc điểm nổi bật của thời kì quá độ lên chủ nghĩa xã hội?", a: ["Sự xác lập vai trò thống trị của giai cấp công nhân thông qua đội tiên phong là Đảng Cộng sản.", "Xây dựng thành công chủ nghĩa xã hội.", "Tiến hành công nghiệp hóa, hiện đại hóa đất nước, xây dựng cơ sở vật chất - kĩ thuật cho chủ nghĩa xã hội.", "Sự đan xen vừa thống nhất vừa đấu tranh giữa những yếu tố của xã hội cũ và những nhân tố mới của chủ nghĩa xã hội."], c: 3 },
+{ q: "Nội dung nào dưới đây là thực chất của thời kì quá độ?", a: ["Thời kì tiếp tục cuộc đấu tranh của giai cấp công nhân chống giai cấp tư sản.", "Thời kì cải biến cách mạng từ xã hội tiền tư bản và tư bản chủ nghĩa sang xã hội xã hội chủ nghĩa.", "Thời kì giai cấp công nhân phát triển kinh tế, xây dựng cơ sở vật chất - kĩ thuật cho chủ nghĩa xã hội.", "Thời kì giai cấp công nhân tiến hành công nghiệp hóa, hiện đại hóa đất nước."], c: 1 },
+{ q: "Nội dung nào dưới đây là đặc điểm kinh tế của thời kì quá độ lên chủ nghĩa xã hội?", a: ["Tiến hành công nghiệp hóa, hiện đại hóa đất nước.", "Tồn tại nền kinh tế nhiều thành phần.", "Tồn tại duy nhất thành phần kinh tế tập thể.", "Phát triển lực lượng sản xuất."], c: 1 },
+{ q: "Nội dung nào dưới đây không phải là đặc điểm chính trị của thời kì quá độ lên chủ nghĩa xã hội?", a: ["Thiết lập, tăng cường chuyên chính vô sản.", "Giai cấp công nhân nắm và sử dụng quyền lực nhà nước trấn áp giai cấp tư sản.", "Tồn tại nhiều tư tưởng khác nhau.", "Giai cấp công nhân tổ chức xây dựng và bảo vệ chế độ mới."], c: 2 },
+{ q: "Tiếp tục cuộc đấu tranh giai cấp giữa giai cấp vô sản đã chiến thắng nhưng chưa hoàn toàn chiến thắng với giai cấp tư sản đã thất bại nhưng chưa phải thất bại hoàn toàn là đặc điểm của thời kì quá độ trên phương diện", a: ["kinh tế.", "tư tưởng, văn hóa.", "chính trị.", "xã hội."], c: 2 },
+{ q: "Nội dung nào dưới đây là đặc điểm trên lĩnh vực tư tưởng, văn hóa của thời kì quá độ lên chủ nghĩa xã hội?", a: ["Tồn tại nhiều giai cấp, tầng lớp.", "Tồn tại nhiều tư tưởng khác nhau.", "Tồn tại sự khác biệt giữa lao động trí óc và lao động chân tay.", "Tồn tại nhiều thành phần kinh tế đối lập."], c: 1 },
+{ q: "Giai cấp công nhân từng bước xây dựng văn hóa vô sản, nền văn hóa mới xã hội chủ nghĩa, tiếp thu giá trị văn hóa dân tộc và tinh hoa văn hóa nhân loại, bảo đảm đáp ứng nhu cầu văn hóa tinh thần ngày càng tăng của nhân dân là đặc điểm của thời kì quá độ trên phương diện", a: ["chính trị.", "kinh tế.", "tư tưởng, văn hóa.", "xã hội."], c: 2 },
+{ q: "Nội dung nào dưới đây không phải là đặc điểm trên lĩnh vực xã hội của thời kì quá độ lên chủ nghĩa xã hội?", a: ["Tồn tại nhiều tư tưởng khác nhau.", "Tồn tại sự khác biệt giữa thành thị, nông thôn.", "Tồn tại sự khác biệt giữa lao động trí óc và lao động chân tay.", "Tồn tại nhiều hủ tục, tệ nạn xã hội."], c: 0 },
+{ q: "Nội dung nào dưới đây là con đường phát triển của cách mạng Việt Nam được Chủ tịch Hồ Chí Minh nêu ra trong Chánh cương vắn tắt của Đảng?", a: ["Làm cách mạng dân tộc dân chủ nhân dân để đi thẳng tới chế độ cộng sản chủ nghĩa.", "Làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản.", "Làm thổ địa cách mạng và tư sản dân quyền cách mạng để đi tới xã hội cộng sản.", "Làm tư sản dân quyền và thổ địa cách mạng để đi thẳng tới xã hội xã hội chủ nghĩa và cộng sản chủ nghĩa."], c: 1 },
+{ q: "Con đường quá độ bỏ qua chế độ tư bản chủ nghĩa ở Việt Nam được đề cập lần đầu tiên ở văn kiện nào dưới đây của Đảng?", a: ["Cương lĩnh chính trị đầu tiên của Đảng tháng 2 năm 1930.", "Luận cương chính trị tháng 10 năm 1930.", "Chính cương của Đảng Lao động tháng 2 năm 1951.", "Cương lĩnh xây dựng đất nước trong thời kì quá độ lên chủ nghĩa xã hội tháng 6 năm 1991."], c: 0 },
+{ q: "Con đường cách mạng Việt Nam là quá độ lên chủ nghĩa xã hội bỏ qua chế độ tư bản chủ nghĩa là tất yếu vì", a: ["phù hợp với đặc điểm của đất nước và xu thế phát triển của thời đại.", "Đảng Cộng sản Việt Nam đã có đường lối đúng đắn.", "sự phát triển của lực lượng sản xuất.", "đáp ứng được nguyện vọng và mong ước của nhân dân ta."], c: 0 },
+{ q: "Thời kì quá độ lên chủ nghĩa xã hội trên phạm vi cả nước ta bắt đầu từ năm", a: ["1945.", "1954.", "1975.", "1986."], c: 2 },
+{ q: "Quan điểm: Lấy nông nghiệp làm mặt trận hàng đầu trong chặng đường đầu tiên của thời kì quá độ, được Đảng ta nêu tại", a: ["Đại hội IV.", "Đại hội V.", "Đại hội VI.", "Đại hội VII."], c: 1 },
+{ q: "Cương lĩnh xây dựng đất nước trong thời kì quá độ lên chủ nghĩa xã hội (1991) đã xác định mô hình chủ nghĩa xã hội ở nước ta có sáu đặc trưng, được Đảng Cộng sản Việt Nam thông qua tại", a: ["Đại hội VI.", "Đại hội VIII.", "Đại hội VII.", "Đại hội IX."], c: 2 },
+{ q: "Nội dung nào dưới đây không phải là đặc trưng của chủ nghĩa xã hội mà Đảng Cộng sản Việt Nam xác định trong Cương lĩnh xây dựng đất nước trong thời kì quá độ lên chủ nghĩa xã hội (1991)?", a: ["Có Nhà nước pháp quyền xã hội chủ nghĩa của nhân dân, do nhân dân, vì nhân dân do Đảng Cộng sản lãnh đạo.", "Do nhân dân lao động làm chủ.", "Có một nền kinh tế phát triển cao dựa trên lực lượng sản xuất hiện đại và chế độ công hữu về các tư liệu sản xuất chủ yếu.", "Có nền văn hóa tiên tiến, đậm đà bản sắc dân tộc."], c: 0 },
+{ q: "Nhận thức của Đảng Cộng sản Việt Nam về chủ nghĩa xã hội và con đường đi lên chủ nghĩa xã hội không chỉ dừng ở nhận thức định hướng, định tính mà từng bước đạt tới trình độ định hình, định lượng tại", a: ["Đại hội VI.", "Đại hội VII.", "Đại hội VIII.", "Đại hội IX."], c: 1 },
+{ q: "Tại Đại hội Đảng nào dưới đây, Đảng Cộng sản Việt Nam xác định: \"... thời kì phát triển mới - đẩy mạnh công nghiệp hóa, hiện đại hóa đất nước\"?", a: ["Đại hội VI (1986).", "Đại hội VII (1991).", "Đại hội VIII (1996).", "Đại hội IX (2001)."], c: 2 },
+{ q: "Quá độ lên chủ nghĩa xã hội, bỏ qua chế độ tư bản chủ nghĩa là bỏ qua yếu tố nào dưới đây của chủ nghĩa tư bản?", a: ["Bỏ qua nhà nước của giai cấp tư sản và bỏ qua việc xác lập vị trí thống trị của kiến trúc thượng tầng tư bản chủ nghĩa.", "Bỏ qua cơ sở kinh tế và kiến trúc thượng tầng tư bản chủ nghĩa.", "Bỏ qua việc xác lập vị trí thống trị của quan hệ sản xuất tư bản chủ nghĩa.", "Bỏ qua việc xác lập vị trí thống trị của quan hệ sản xuất và kiến trúc thượng tầng tư bản chủ nghĩa."], c: 3 },
+{ q: "Đẩy mạnh công nghiệp hóa, hiện đại hóa đất nước gắn với phát triển kinh tế tri thức, bảo vệ tài nguyên, môi trường là phương hướng xây dựng chủ nghĩa xã hội được Đảng Cộng sản Việt Nam đề ra tại", a: ["Đại hội VI.", "Đại hội VII.", "Đại hội VIII.", "Đại hội IX."], c: 3 },
+{ q: "Tám đặc trưng của xã hội xã hội chủ nghĩa mà nhân dân ta đang xây dựng được thể hiện trong văn kiện nào dưới đây của Đảng Cộng sản Việt Nam?", a: ["Văn kiện Đại hội Đảng toàn quốc lần thứ VI (12/1986).", "Văn kiện Đại hội Đảng toàn quốc lần thứ VII (6/1991).", "Văn kiện Đại hội Đảng toàn quốc lần thứ IX (4/2001).", "Văn kiện Đại hội Đảng toàn quốc lần thứ XI (2011)."], c: 3 },
+{ q: "Điền từ ngữ thích hợp vào chỗ trống: Tại Đại hội Đại biểu toàn quốc lần thứ XI, Đảng Cộng sản Việt Nam đã khẳng định: Xã hội xã hội chủ nghĩa là xã hội \"dân giàu, nước mạnh, ...... công bằng, văn minh\".", a: ["bình đẳng.", "dân chủ.", "hạnh phúc.", "tự do."], c: 1 },
+{ q: "Nguyên tắc phân phối cơ bản của thời kì quá độ lên chủ nghĩa xã hội là", a: ["theo nhu cầu.", "theo cổ phần.", "theo lao động.", "theo nguyên tắc bình quân chủ nghĩa."], c: 2 },
+{ q: "Tại Đại hội Đại biểu toàn quốc nào dưới đây của Đảng Cộng sản Việt Nam được gọi là Đại hội Đổi mới đất nước?", a: ["Đại hội IV.", "Đại hội V.", "Đại hội VI.", "Đại hội VIII."], c: 2 },
+{ q: "Nội dung nào dưới đây không phải là đặc điểm cơ bản của thời kì quá độ bỏ qua chế độ tư bản chủ nghĩa lên chủ nghĩa xã hội ở Việt Nam?", a: ["Xuất phát từ một xã hội thuộc địa nửa phong kiến, với lực lượng sản xuất thấp.", "Thời đại ngày nay vẫn là thời đại quá độ từ chủ nghĩa tư bản lên chủ nghĩa xã hội.", "Cuộc cách mạng khoa học và công nghệ hiện đại đang diễn ra mạnh mẽ.", "Giao thoa, tiếp biến văn hóa đang diễn ra mạnh mẽ."], c: 3 },
+{ q: "Nội dung nào dưới đây không phải là phương hướng xây dựng chủ nghĩa xã hội ở Việt Nam hiện nay được xác định trong Cương lĩnh xây dựng đất nước trong thời kì quá độ lên chủ nghĩa xã hội (bổ sung và phát triển năm 2011)?", a: ["Phát triển nền kinh tế thị trường định hướng xã hội chủ nghĩa.", "Bảo đảm vững chắc quốc phòng và an ninh quốc gia, trật tự, an toàn xã hội.", "Có quan hệ hữu nghị và hợp tác với các nước trên thế giới.", "Xây dựng Đảng trong sạch, vững mạnh."], c: 2 },
+{ q: "Nội dung nào dưới đây là đặc trưng thể hiện mục tiêu của xã hội xã hội chủ nghĩa mà nhân dân ta đang xây dựng?", a: ["Do nhân dân làm chủ.", "Dân giàu, nước mạnh, dân chủ, công bằng, văn minh.", "Có nền văn hóa tiên tiến đậm đà bản sắc dân tộc.", "Có nhà nước pháp quyền xã hội chủ nghĩa của nhân dân, do nhân dân và vì nhân dân."], c: 1 },
+{ q: "Nội dung nào dưới đây không phải là phương hướng xây dựng chủ nghĩa xã hội ở nước ta hiện nay?", a: ["Đẩy mạnh công nghiệp hóa, hiện đại hóa đất nước gắn với phát triển kinh tế tri thức, bảo vệ tài nguyên, môi trường.", "Phát triển nền kinh tế thị trường định hướng xã hội chủ nghĩa.", "Đổi mới căn bản, toàn diện nền giáo dục.", "Xây dựng Đảng trong sạch, vững mạnh."], c: 2 },
+{ q: "Nội dung nào dưới đây không phải là mối quan hệ lớn được Đại hội XII xác định cần nhận thức và giải quyết?", a: ["Giữa giữ gìn bản sắc và tiếp thu tinh hoa văn hóa nhân loại.", "Giữa đổi mới kinh tế và đổi mới chính trị.", "Giữa đổi mới, ổn định và phát triển.", "Giữa Đảng lãnh đạo, Nhà nước quản lí và nhân dân làm chủ."], c: 0 }
+];
+let currentIndex = 0;
+let score = 0;
+let selections = Array(questions.length).fill(null);
+let submitted = Array(questions.length).fill(false);
+function initQuiz() {
+currentIndex = 0; score = 0;
+selections = Array(questions.length).fill(null);
+submitted = Array(questions.length).fill(false);
+buildNavCircles();
+renderQuestion();
+document.getElementById("resultBox").style.display = "none";
+}
+function buildNavCircles() {
+  const panel = document.getElementById("navPanel");
+  panel.innerHTML = "";
+  for (let i = 0; i < questions.length; i++) {
+    const c = document.createElement("div");
+    c.className = "nav-circle unanswered";
+    c.textContent = i + 1;
+    c.dataset.index = i;
+    c.onclick = () => { currentIndex = +c.dataset.index; renderQuestion(); };
+    panel.appendChild(c);
+  }
+}
+function updateNavCircles() {
+  const circles = document.querySelectorAll(".nav-circle");
+  circles.forEach((c, i) => {
+    c.classList.remove("correct", "wrong", "unanswered", "current");
+    if (submitted[i]) {
+      c.classList.add(selections[i] === questions[i].c ? "correct" : "wrong");
+    } else {
+      c.classList.add("unanswered");
+    }
+    if (i === currentIndex) c.classList.add("current");
+  });
+}
+function renderQuestion() {
+const q = questions[currentIndex];
+document.getElementById("counter").innerText = `Câu ${currentIndex + 1} / ${questions.length}`;
+document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+document.getElementById("qText").innerText = q.q;
+const optionsDiv = document.getElementById("options");
+optionsDiv.innerHTML = "";
+q.a.forEach((opt, i) => {
+const div = document.createElement("div");
+div.className = "option";
+if (selections[currentIndex] === i) div.classList.add("selected");
+if (submitted[currentIndex]) {
+div.classList.add("disabled");
+if (i === q.c) div.classList.add("correct");
+if (selections[currentIndex] === i && i !== q.c) div.classList.add("wrong");
+}
+div.innerHTML = `<input type="radio" name="q" value="${i}" ${selections[currentIndex] === i ? 'checked' : ''}> <span>${String.fromCharCode(65 + i)}. ${opt}</span>`;
+div.onclick = () => { if (!submitted[currentIndex]) { selections[currentIndex] = i; renderQuestion(); } };
+optionsDiv.appendChild(div);
+});
+const fb = document.getElementById("fb");
+if (submitted[currentIndex]) {
+fb.style.display = "block";
+fb.style.background = selections[currentIndex] === q.c ? "#e8f5e9" : "#ffebee";
+fb.innerHTML = selections[currentIndex] === q.c ? "✅ Chính xác!" : `❌ Sai rồi! Đáp án đúng là <span class="correct-answer">${String.fromCharCode(65 + q.c)}</span>`;
+document.getElementById("submitBtn").disabled = true;
+document.getElementById("nextBtn").disabled = false;
+} else {
+fb.style.display = "none";
+document.getElementById("submitBtn").disabled = false;
+document.getElementById("nextBtn").disabled = true;
+}
+  if (currentIndex === questions.length - 1 && submitted[currentIndex]) {
+    document.getElementById("nextBtn").innerText = "Xem kết quả";
+  } else {
+    document.getElementById("nextBtn").innerText = "Câu tiếp theo";
+  }
+  updateNavCircles();
+}
+document.getElementById("submitBtn").onclick = () => {
+  if (selections[currentIndex] === null) return alert("Vui lòng chọn đáp án!");
+  submitted[currentIndex] = true;
+  if (selections[currentIndex] === questions[currentIndex].c) {
+    score++;
+    document.getElementById("correctSound").play();
+  } else {
+    document.getElementById("wrongSound").play();
+  }
+  renderQuestion();
+};
+document.getElementById("nextBtn").onclick = () => {
+if (currentIndex < questions.length - 1) {
+currentIndex++;
+renderQuestion();
+} else {
+const rb = document.getElementById("resultBox");
+rb.style.display = "block";
+rb.innerHTML = `<h3>Hoàn thành!</h3><p style="font-size:20px;">Bạn đạt được <strong>${score} / ${questions.length}</strong> câu đúng (${((score/questions.length)*10).toFixed(2)} điểm).</p>`;
+window.scrollTo(0, document.body.scrollHeight);
+}
+};
+document.getElementById("resetBtn").onclick = () => { if(confirm("Làm mới toàn bộ câu hỏi?")) initQuiz(); };
+initQuiz();
+</script>
+<audio id="correctSound" src="dragon-studio-correct-472358.mp3"></audio>
+<audio id="wrongSound" src="freesound_community-wrong-47985.mp3"></audio>
+</body>
+</html>
