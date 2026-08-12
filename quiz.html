@@ -106,7 +106,26 @@ let score = 0;
 let selections = [];
 let submitted = [];
 
-function subjectOf(key) { return key.indexOf('cnxkh') === 0 ? 'cnxh' : 'tthcm'; }
+function subjectOf(key) { return key.indexOf('cnxh') === 0 ? 'cnxh' : 'tthcm'; }
+
+const COMBINED_QUIZZES = {
+  "cnxh-all": { title: "CNXH KH — Tổng hợp tất cả chương", keys: ["cnxkh1", "cnxkh2", "cnxkh3", "cnxkh4", "cnxkh5", "cnxkh6", "cnxkh7"] }
+};
+
+function resolveQuiz(key) {
+  if (QUIZ_DATA[key]) return QUIZ_DATA[key];
+  const comb = COMBINED_QUIZZES[key];
+  if (!comb) return null;
+  let questions = [];
+  for (const k of comb.keys) {
+    const qz = QUIZ_DATA[k];
+    if (!qz) return null;
+    questions = questions.concat(qz.questions.map(q => ({ q: q.q, a: q.a.slice(), c: q.c })));
+  }
+  return { title: comb.title, questions: questions };
+}
+
+function allQuizKeys() { return Object.keys(QUIZ_DATA).concat(Object.keys(COMBINED_QUIZZES)); }
 
 function renderHome() {
   document.getElementById("homeScreen").classList.remove("hidden");
@@ -124,8 +143,8 @@ function renderHome() {
     <div class="grid" id="gridCnxh"></div>
     <p class="foot">Tổng cộng 13 đề — 731 câu hỏi</p>`;
   let total = 0;
-  for (const key of Object.keys(QUIZ_DATA)) {
-    const quiz = QUIZ_DATA[key];
+  for (const key of allQuizKeys()) {
+    const quiz = resolveQuiz(key);
     total += quiz.questions.length;
     const div = document.createElement("div");
     div.className = "card badged" + (subjectOf(key) === 'cnxh' ? ' cnxh' : '');
@@ -134,11 +153,11 @@ function renderHome() {
     document.getElementById(subjectOf(key) === 'cnxh' ? "gridCnxh" : "gridTthcm").appendChild(div);
   }
   const totals = host.querySelector(".foot");
-  totals.textContent = "Tổng cộng " + Object.keys(QUIZ_DATA).length + " đề — " + total + " câu hỏi";
+  totals.textContent = "Tổng cộng " + allQuizKeys().length + " đề — " + total + " câu hỏi";
 }
 
 function openQuiz(key) {
-  const quiz = QUIZ_DATA[key];
+  const quiz = resolveQuiz(key);
   if (!quiz) return renderHome();
   questions = quiz.questions;
   document.title = quiz.title + " — Trắc nghiệm";
@@ -265,7 +284,7 @@ document.getElementById("resetBtn").onclick = () => { if (confirm("Làm mới to
 document.getElementById("homeBtn").onclick = () => { renderHome(); history.replaceState(null, "", "quiz.html"); window.scrollTo(0, 0); };
 
 const param = new URLSearchParams(location.search).get("q");
-if (param && QUIZ_DATA[param]) {
+if (param && resolveQuiz(param)) {
   openQuiz(param);
 } else {
   renderHome();
