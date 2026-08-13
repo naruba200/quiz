@@ -5,97 +5,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Trắc nghiệm ôn thi</title>
 <style>
-:root { --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5d6b82; --primary: #1b6ef3; --primary-dark: #0f4fb5; --ok: #16844f; --border: #dce4f3; --tthcm: #1b6ef3; --cnxh: #e0a100; }
+:root {
+  --bg1: #6d28d9; --bg2: #8b5cf6; --bg3: #a855f7;
+  --purple: #7c3aed;
+  --on-accent: #ffffff;
+  --card: #ffffff;
+  --panel: #ffffff;
+  --text: #1d2433;
+  --muted: #5d6b82;
+  --border: #d8e0ee;
+  --ok: #16844f;
+  --bad: #c62828;
+  --soft-bg: #ece4ff;
+  --soft-text: #7c3aed;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg1: #171231; --bg2: #21184b; --bg3: #2c1f5f;
+  --purple: #a78bfa;
+  --on-accent: #241a4d;
+  --card: #1e1a3c;
+  --panel: #251f4d;
+  --text: #e9e6fa;
+  --muted: #a89fd0;
+  --border: #3a3263;
+  --ok: #4ade80;
+  --bad: #f87171;
+  --soft-bg: #2f2759;
+  --soft-text: #c4b5fd;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg1: #171231; --bg2: #21184b; --bg3: #2c1f5f;
+    --purple: #a78bfa;
+    --on-accent: #241a4d;
+    --card: #1e1a3c;
+    --panel: #251f4d;
+    --text: #e9e6fa;
+    --muted: #a89fd0;
+    --border: #3a3263;
+    --ok: #4ade80;
+    --bad: #f87171;
+    --soft-bg: #2f2759;
+    --soft-text: #c4b5fd;
+    color-scheme: dark;
+  }
+}
 * { box-sizing: border-box; }
-body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(145deg, #ecf3ff 0%, #f8fbff 50%, #eefbf6 100%); color: var(--text); min-height: 100vh; padding: 24px; }
-.container { width: min(950px, 100%); margin: 0 auto; }
-.section-title { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font-size: 17px; font-weight: 700; }
-.section-title::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.section-title.tthcm::before { background: var(--tthcm); }
-.section-title.cnxh::before { background: var(--cnxh); }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(150deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%); color: var(--text); min-height: 100vh; }
+.hidden { display: none !important; }
+.container { width: min(950px, 100%); margin: 0 auto; padding: 24px 16px; }
+/* ---- Home ---- */
+.home-head { text-align: center; color: #fff; margin-bottom: 24px; }
+.home-head h1 { margin: 0; font-size: 28px; letter-spacing: 1px; text-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.home-head .subtitle { margin-top: 6px; font-size: 14px; opacity: 0.9; }
+.section-title { display: flex; align-items: center; gap: 10px; margin: 22px 0 12px; font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
+.section-title::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: #fff; }
 .grid { display: grid; gap: 10px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-decoration: none; color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.05); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; cursor: pointer; }
-.card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.09); }
-.card.badged { border-left: 6px solid var(--tthcm); }
-.card.badged.cnxh { border-left-color: var(--cnxh); }
+.card { background: var(--card); border-radius: 12px; padding: 16px; text-decoration: none; color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.24); }
+.card.badged { border-left: 6px solid var(--purple); }
+.card.badged.cnxh { border-left-color: #f59e0b; }
 .card .name { font-weight: 600; font-size: 15px; }
 .card .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
 .card .arrow { color: var(--muted); font-size: 20px; flex-shrink: 0; }
-.foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 28px; }
-.hidden { display: none !important; }
+.foot { text-align: center; color: #fff; opacity: 0.85; font-size: 13px; margin-top: 28px; }
 /* ---- Quiz screen ---- */
-.quiz-head { margin-bottom: 16px; text-align: center; }
-h1 { margin: 0; font-size: 24px; color: var(--primary-dark); }
-.subtitle { color: var(--muted); margin-top: 6px; font-size: 14px; }
-.back-row { display: flex; justify-content: flex-start; margin-bottom: 8px; }
-.back-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 6px 14px; font-size: 14px; cursor: pointer; transition: all 0.15s; }
-.back-btn:hover { border-color: var(--primary); color: var(--primary); background: #f0f6ff; }
-.progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-#progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
-.quiz-card { background: var(--card); border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-.question-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 20px; white-space: pre-wrap; }
-.options { display: grid; gap: 12px; }
-.option { display: flex; align-items: center; padding: 14px 16px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
-.option:hover:not(.disabled) { border-color: var(--primary); background: #f0f6ff; }
-.option.selected { border-color: var(--primary); background: #f0f6ff; font-weight: 600; }
-.option.correct { border-color: var(--ok); background: #e8f5e9; color: var(--ok); }
-.option.wrong { border-color: #d32f2f; background: #ffebee; color: #d32f2f; }
-.option input { display: none; }
-.controls { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
-button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 15px; }
-#submitBtn { background: var(--primary); color: white; }
-#nextBtn { background: var(--text); color: white; }
-#resetBtn { background: #e0e0e0; color: #444; }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.feedback { margin-top: 16px; padding: 12px; border-radius: 6px; font-weight: 500; display: none; }
-.correct-answer { font-weight: bold; color: var(--ok); }
-#resultBox { display: none; margin-top: 24px; text-align: center; padding: 30px; border-radius: 12px; background: white; }
-.nav-panel {
-  position: fixed; top: 12px; right: 12px;
-  background: white; border-radius: 10px; padding: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-  border: 1px solid var(--border);
-  display: flex; flex-wrap: wrap; gap: 6px;
-  max-width: 200px; max-height: 300px; overflow-y: auto;
-  z-index: 1000;
-}
-.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: white; color: var(--text); transition: all 0.15s; user-select: none; }
+.qz-top { display: flex; align-items: center; gap: 14px; color: #fff; }
+.back-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+.back-btn:hover { background: rgba(255,255,255,0.35); }
+.qz-title { flex: 1; font-weight: 700; font-size: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.qz-counter { font-weight: 700; font-size: 15px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 999px; }
+.icon-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; flex-shrink: 0; transition: background 0.15s; }
+.icon-btn:hover { background: rgba(255,255,255,0.35); }
+.progress-bar { height: 8px; background: rgba(255,255,255,0.25); border-radius: 4px; margin: 14px 0 18px; overflow: hidden; }
+#progress { height: 100%; background: #fff; width: 0%; border-radius: 4px; transition: width 0.3s; }
+.qz-question-card { background: var(--card); border-radius: 16px; padding: 26px 24px; box-shadow: 0 10px 34px rgba(0,0,0,0.22); }
+.qz-qnum { color: var(--purple); font-weight: 800; font-size: 13px; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
+.qz-qtext { font-size: 20px; font-weight: 600; line-height: 1.5; white-space: pre-wrap; }
+.qz-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+.opt { border: none; border-radius: 16px; padding: 20px 18px; min-height: 120px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s; text-align: left; }
+.opt:hover:not(.disabled) { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.26); }
+.opt.disabled { cursor: default; }
+.opt.dim { opacity: 0.4; }
+.opt-letter { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+.opt-text { font-size: 16px; font-weight: 600; line-height: 1.4; white-space: pre-wrap; }
+.opt.correct { background: #16a34a !important; color: #fff !important; animation: pop 0.35s ease; }
+.opt.wrong { background: #dc2626 !important; color: #fff !important; animation: shake 0.4s ease; }
+@keyframes pop { 0% { transform: scale(0.92); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.qz-feedback { display: none; margin-top: 16px; background: var(--card); border-radius: 12px; padding: 14px 18px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+.qz-feedback.ok { color: var(--ok); }
+.qz-feedback.bad { color: var(--bad); }
+.countdown { margin-top: 6px; color: var(--muted); font-weight: 500; font-size: 13px; }
+/* ---- Result ---- */
+#resultBox { max-width: 520px; margin: 40px auto; background: var(--card); border-radius: 20px; padding: 36px 28px; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+#resultBox h2 { margin: 0 0 6px; font-size: 24px; }
+#resultBox .score-line { font-size: 20px; font-weight: 700; margin: 12px 0; }
+#resultBox .score-line b { color: var(--purple); }
+#resultBox .pct { font-size: 15px; color: var(--muted); }
+.result-actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
+.result-actions button { padding: 12px 22px; border: none; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; }
+#restartBtn { background: var(--purple); color: var(--on-accent); }
+#resultHomeBtn { background: var(--soft-bg); color: var(--soft-text); }
+/* ---- Nav panel ---- */
+.nav-panel { position: fixed; top: 12px; right: 12px; background: var(--panel); border-radius: 12px; padding: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.28); display: flex; flex-wrap: wrap; gap: 6px; max-width: 200px; max-height: 320px; overflow-y: auto; z-index: 1000; }
+.nav-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; cursor: pointer; border: 2px solid var(--border); background: var(--card); color: var(--text); transition: all 0.15s; user-select: none; }
 .nav-circle:hover { transform: scale(1.15); }
-.nav-circle.correct { background: #16844f; border-color: #16844f; color: white; }
-.nav-circle.wrong { background: #d32f2f; border-color: #d32f2f; color: white; }
-.nav-circle.current.correct { background: #0e5c36; border-color: #0e5c36; }
-.nav-circle.current.wrong { background: #a12121; border-color: #a12121; }
-.nav-circle.current.unanswered { background: #d0d8e8; border-color: #b0bcd4; }
+.nav-circle.correct { background: #16a34a; border-color: #16a34a; color: #fff; }
+.nav-circle.wrong { background: #dc2626; border-color: #dc2626; color: #fff; }
+.nav-circle.current { outline: 3px solid var(--purple); }
+.theme-toggle { position: fixed; bottom: 16px; right: 16px; width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--panel); color: var(--text); box-shadow: 0 6px 20px rgba(0,0,0,0.3); font-size: 20px; line-height: 1; cursor: pointer; z-index: 1001; transition: background 0.15s, transform 0.15s; }
+.theme-toggle:hover { transform: scale(1.08); }
+@media (max-width: 640px) {
+  .qz-options { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .opt { padding: 14px 12px; min-height: 96px; }
+  .opt-text { font-size: 14px; }
+  .qz-qtext { font-size: 17px; }
+}
 </style>
 </head>
 <body>
 <div class="container">
   <div id="homeScreen"></div>
+
   <div id="quizScreen" class="hidden">
-    <div class="back-row">
-      <button class="back-btn" id="homeBtn">‹ Danh sách đề</button>
-    </div>
-    <div class="quiz-head">
-      <h1 id="quizTitle">CÂU HỎI TRẮC NGHIỆM</h1>
-      <p id="counter" class="subtitle">Câu 1 / 20</p>
+    <div class="qz-top">
+      <button class="back-btn" id="homeBtn" title="Danh sách đề">←</button>
+      <div class="qz-title" id="quizTitle">CÂU HỎI TRẮC NGHIỆM</div>
+      <div class="qz-counter" id="counter">1 / 20</div>
+      <button class="icon-btn" id="resetBtn" title="Làm mới">⟳</button>
     </div>
     <div class="progress-bar"><div id="progress"></div></div>
-    <div class="quiz-card">
-      <div id="qText" class="question-text"></div>
-      <div id="options" class="options"></div>
-      <div id="fb" class="feedback"></div>
-      <div class="controls">
-        <button id="resetBtn">Làm mới</button>
-        <div style="display:flex; gap:12px;">
-          <button id="submitBtn">Gửi đáp án</button>
-          <button id="nextBtn" disabled>Câu tiếp theo</button>
-        </div>
-      </div>
+    <div class="qz-question-card">
+      <div class="qz-qnum" id="qIndexLabel">Câu 1</div>
+      <div id="qText" class="qz-qtext"></div>
     </div>
-    <div id="resultBox" class="quiz-card"></div>
+    <div id="options" class="qz-options"></div>
+    <div id="fb" class="qz-feedback">
+      <span id="fbText"></span>
+      <div id="countdown" class="countdown"></div>
+    </div>
   </div>
+
+  <div id="resultBox" class="hidden"></div>
 </div>
 <div id="navPanel" class="nav-panel"></div>
+<button id="themeBtn" class="theme-toggle" title="Đổi giao diện sáng / tối">🌙</button>
 <audio id="correctSound" src="dragon-studio-correct-472358.mp3"></audio>
 <audio id="wrongSound" src="freesound_community-wrong-47985.mp3"></audio>
 <script src="questions.js"></script>
@@ -105,6 +162,11 @@ let currentIndex = 0;
 let score = 0;
 let selections = [];
 let submitted = [];
+let pendingTimer = null;
+let countdownTimer = null;
+
+const OPT_COLORS = ['#e8403e', '#2f6bff', '#d97706', '#23b573'];
+const AUTO_ADVANCE_MS = 3000;
 
 function subjectOf(key) { return key.indexOf('cnxh') === 0 ? 'cnxh' : 'tthcm'; }
 
@@ -128,18 +190,20 @@ function resolveQuiz(key) {
 function allQuizKeys() { return Object.keys(QUIZ_DATA).concat(Object.keys(COMBINED_QUIZZES)); }
 
 function renderHome() {
+  clearCountdown();
   document.getElementById("homeScreen").classList.remove("hidden");
   document.getElementById("quizScreen").classList.add("hidden");
+  document.getElementById("resultBox").classList.add("hidden");
   document.getElementById("navPanel").innerHTML = "";
   const host = document.getElementById("homeScreen");
   host.innerHTML = `
-    <div style="text-align:center; margin-bottom:20px;">
+    <div class="home-head">
       <h1>TRẮC NGHIỆM ÔN THI</h1>
       <p class="subtitle">Chọn một đề để bắt đầu làm bài</p>
     </div>
-    <div class="section-title tthcm">TƯ TƯỞNG HỒ CHÍ MINH</div>
+    <div class="section-title">Tư tưởng Hồ Chí Minh</div>
     <div class="grid" id="gridTthcm"></div>
-    <div class="section-title cnxh">CHỦ NGHĨA XÃ HỘI KHOA HỌC</div>
+    <div class="section-title">Chủ nghĩa xã hội khoa học</div>
     <div class="grid" id="gridCnxh"></div>
     <p class="foot">Tổng cộng 13 đề — 731 câu hỏi</p>`;
   let total = 0;
@@ -163,6 +227,7 @@ function openQuiz(key) {
   document.title = quiz.title + " — Trắc nghiệm";
   document.getElementById("quizTitle").textContent = quiz.title;
   document.getElementById("homeScreen").classList.add("hidden");
+  document.getElementById("resultBox").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
   history.replaceState(null, "", "quiz.html?q=" + key);
   initQuiz();
@@ -190,7 +255,6 @@ function initQuiz() {
   currentIndex = 0; score = 0;
   selections = Array(questions.length).fill(null);
   submitted = Array(questions.length).fill(false);
-  document.getElementById("resultBox").style.display = "none";
   buildNavCircles();
   renderQuestion();
 }
@@ -202,7 +266,7 @@ function buildNavCircles() {
     c.className = "nav-circle unanswered";
     c.textContent = i + 1;
     c.dataset.index = i;
-    c.onclick = () => { currentIndex = +c.dataset.index; renderQuestion(); };
+    c.onclick = () => { clearCountdown(); currentIndex = +c.dataset.index; renderQuestion(); };
     panel.appendChild(c);
   }
 }
@@ -218,70 +282,152 @@ function updateNavCircles() {
     if (i === currentIndex) c.classList.add("current");
   });
 }
-function renderQuestion() {
-  const q = questions[currentIndex];
-  document.getElementById("counter").innerText = `Câu ${currentIndex + 1} / ${questions.length}`;
-  document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
-  document.getElementById("qText").innerText = q.q;
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  q.a.forEach((opt, i) => {
-    const div = document.createElement("div");
-    div.className = "option";
-    if (selections[currentIndex] === i) div.classList.add("selected");
-    if (submitted[currentIndex]) {
-      div.classList.add("disabled");
-      if (i === q.c) div.classList.add("correct");
-      if (selections[currentIndex] === i && i !== q.c) div.classList.add("wrong");
-    }
-    div.innerHTML = `<input type="radio" name="q" value="${i}" ${selections[currentIndex] === i ? 'checked' : ''}> <span>${String.fromCharCode(65 + i)}. ${opt}</span>`;
-    div.onclick = () => { if (!submitted[currentIndex]) { selections[currentIndex] = i; renderQuestion(); } };
-    optionsDiv.appendChild(div);
-  });
-  const fb = document.getElementById("fb");
-  if (submitted[currentIndex]) {
-    fb.style.display = "block";
-    fb.style.background = selections[currentIndex] === q.c ? "#e8f5e9" : "#ffebee";
-    fb.innerHTML = selections[currentIndex] === q.c ? "✅ Chính xác!" : `❌ Sai rồi! Đáp án đúng là <span class="correct-answer">${String.fromCharCode(65 + q.c)}</span>`;
-    document.getElementById("submitBtn").disabled = true;
-    document.getElementById("nextBtn").disabled = false;
-  } else {
-    fb.style.display = "none";
-    document.getElementById("submitBtn").disabled = false;
-    document.getElementById("nextBtn").disabled = true;
-  }
-  if (currentIndex === questions.length - 1 && submitted[currentIndex]) {
-    document.getElementById("nextBtn").innerText = "Xem kết quả";
-  } else {
-    document.getElementById("nextBtn").innerText = "Câu tiếp theo";
-  }
-  updateNavCircles();
+
+function clearCountdown() {
+  if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
 }
 
-document.getElementById("submitBtn").onclick = () => {
-  if (selections[currentIndex] === null) return alert("Vui lòng chọn đáp án!");
-  submitted[currentIndex] = true;
-  if (selections[currentIndex] === questions[currentIndex].c) {
-    score++;
-    document.getElementById("correctSound").play();
+function startCountdown(ms) {
+  clearCountdown();
+  const cdBox = document.getElementById("countdown");
+  if (currentIndex === questions.length - 1) {
+    cdBox.textContent = "Đang chuyển đến kết quả…";
   } else {
-    document.getElementById("wrongSound").play();
+    let remaining = Math.ceil(ms / 1000);
+    cdBox.textContent = "Tự chuyển câu tiếp theo sau " + remaining + " giây";
+    countdownTimer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) { clearInterval(countdownTimer); countdownTimer = null; }
+      else cdBox.textContent = "Tự chuyển câu tiếp theo sau " + remaining + " giây";
+    }, 1000);
   }
-  renderQuestion();
-};
-document.getElementById("nextBtn").onclick = () => {
+  pendingTimer = setTimeout(advance, ms);
+}
+
+function advance() {
+  pendingTimer = null;
   if (currentIndex < questions.length - 1) {
     currentIndex++;
     renderQuestion();
   } else {
-    const rb = document.getElementById("resultBox");
-    rb.style.display = "block";
-    rb.innerHTML = `<h3>Hoàn thành!</h3><p style="font-size:20px;">Bạn đạt được <strong>${score} / ${questions.length}</strong> câu đúng (${((score/questions.length)*10).toFixed(2)} điểm).</p><p class="subtitle">Hãy nhìn bảng phải/trên để xem chi tiết từng câu.</p>`;
-    window.scrollTo(0, document.body.scrollHeight);
+    showResult();
   }
-};
+}
+
+function renderQuestion() {
+  clearCountdown();
+  const q = questions[currentIndex];
+  document.getElementById("counter").textContent = `${currentIndex + 1} / ${questions.length}`;
+  document.getElementById("qIndexLabel").textContent = `Câu ${currentIndex + 1}`;
+  document.getElementById("progress").style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+  document.getElementById("qText").textContent = q.q;
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  const isSub = submitted[currentIndex];
+  q.a.forEach((opt, i) => {
+    const div = document.createElement("div");
+    div.className = "opt";
+    const colorIdx = i % OPT_COLORS.length;
+    div.style.background = OPT_COLORS[colorIdx];
+    div.style.color = "#fff";
+    if (isSub) {
+      div.classList.add("disabled");
+      if (i === q.c) div.classList.add("correct");
+      else if (selections[currentIndex] === i) div.classList.add("wrong");
+      else div.classList.add("dim");
+    }
+    div.innerHTML = `<div class="opt-letter"></div><div class="opt-text"></div>`;
+    div.querySelector(".opt-letter").textContent = String.fromCharCode(65 + i);
+    div.querySelector(".opt-letter").style.background = "rgba(255,255,255,0.24)";
+    div.querySelector(".opt-text").textContent = opt;
+    div.onclick = () => { if (!submitted[currentIndex]) submitAnswer(i); };
+    optionsDiv.appendChild(div);
+  });
+  const fb = document.getElementById("fb");
+  const fbText = document.getElementById("fbText");
+  if (isSub) {
+    const ok = selections[currentIndex] === q.c;
+    fb.style.display = "block";
+    fb.className = "qz-feedback " + (ok ? "ok" : "bad");
+    fbText.textContent = ok ? "Chính xác!" : `Sai rồi — Đáp án đúng: ${String.fromCharCode(65 + q.c)}`;
+    startCountdown(AUTO_ADVANCE_MS);
+  } else {
+    fb.style.display = "none";
+    fbText.textContent = "";
+    document.getElementById("countdown").textContent = "";
+  }
+  updateNavCircles();
+}
+
+function submitAnswer(i) {
+  if (submitted[currentIndex]) return;
+  submitted[currentIndex] = true;
+  selections[currentIndex] = i;
+  if (i === questions[currentIndex].c) {
+    score++;
+    try { document.getElementById("correctSound").play(); } catch (e) {}
+  } else {
+    try { document.getElementById("wrongSound").play(); } catch (e) {}
+  }
+  renderQuestion();
+}
+
+function showResult() {
+  clearCountdown();
+  document.getElementById("quizScreen").classList.add("hidden");
+  const rb = document.getElementById("resultBox");
+  rb.classList.remove("hidden");
+  const pct = Math.round((score / questions.length) * 100);
+  const emoji = pct >= 90 ? "🏆" : pct >= 70 ? "🎉" : pct >= 50 ? "👍" : "💪";
+  rb.innerHTML = `
+    <div style="font-size:52px;">${emoji}</div>
+    <h2>Hoàn thành!</h2>
+    <div class="score-line">Đúng <b>${score} / ${questions.length}</b> câu</div>
+    <div class="pct">Điểm: <b>${pct.toFixed(2)}</b> / 10</div>
+    <div class="result-actions">
+      <button id="restartBtn">Làm lại</button>
+      <button id="resultHomeBtn">Danh sách đề</button>
+    </div>`;
+  document.getElementById("restartBtn").onclick = () => { rb.classList.add("hidden"); document.getElementById("quizScreen").classList.remove("hidden"); initQuiz(); };
+  document.getElementById("resultHomeBtn").onclick = () => renderHome();
+  document.getElementById("navPanel").innerHTML = "";
+  window.scrollTo(0, 0);
+}
+
 document.getElementById("resetBtn").onclick = () => { if (confirm("Làm mới toàn bộ câu hỏi?")) initQuiz(); };
 document.getElementById("homeBtn").onclick = () => { renderHome(); history.replaceState(null, "", "quiz.html"); window.scrollTo(0, 0); };
+
+// ---- Theme (sáng / tối) ----
+function getSystemTheme() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function savedTheme() {
+  try { return localStorage.getItem('theme'); } catch (e) { return null; }
+}
+function actualTheme() {
+  const saved = savedTheme();
+  if (saved === 'dark') return 'dark';
+  if (saved === 'light') return 'light';
+  return getSystemTheme();
+}
+function applyTheme() {
+  const saved = savedTheme();
+  const root = document.documentElement;
+  if (saved === 'dark') root.setAttribute('data-theme', 'dark');
+  else if (saved === 'light') root.setAttribute('data-theme', 'light');
+  else root.removeAttribute('data-theme');
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = actualTheme() === 'dark' ? '☀️' : '🌙';
+}
+document.getElementById('themeBtn').onclick = () => {
+  try { localStorage.setItem('theme', actualTheme() === 'dark' ? 'light' : 'dark'); } catch (e) {}
+  applyTheme();
+};
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+}
+applyTheme();
 
 const param = new URLSearchParams(location.search).get("q");
 if (param && resolveQuiz(param)) {
