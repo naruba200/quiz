@@ -335,8 +335,24 @@ function updateNavCircles() {
       c.classList.add("unanswered");
     }
     if (i === displayIndex) c.classList.add("current");
-    c.title = `Câu ${i + 1}` + (attemptCounts[i] > 1 ? ` — xuất hiện ${attemptCounts[i]} lần` : "");
+    let title = `Câu ${i + 1}`;
+    if (attemptCounts[i] > 1) {
+      title += ` — xuất hiện ${attemptCounts[i]} lần`;
+      const back = turnsUntilQIndex(i);
+      if (back !== null) title += ` — quay lại sau ${back} câu`;
+    }
+    c.title = title;
   });
+}
+
+function turnsUntilQIndex(qIndex) {
+  const idx = order.lastIndexOf(qIndex);
+  if (idx === -1 || idx <= pos) return null;
+  let count = 0;
+  for (let k = pos + 1; k <= idx; k++) {
+    if (!done[order[k]]) count++;
+  }
+  return count;
 }
 
 function clearCountdown() {
@@ -426,6 +442,8 @@ function submitAnswer(i) {
     const total = questions.length;
     const gap = Math.round(total * 0.3) + Math.floor(Math.random() * Math.round(total * 0.7));
     order.splice(Math.min(pos + gap, order.length), 0, qIndex);
+    const back = turnsUntilQIndex(qIndex);
+    document.getElementById("fbText").textContent = `Sai rồi — Đáp án đúng: ${String.fromCharCode(65 + q.c)}. Sẽ quay lại sau ${back} câu nữa.`;
   }
   updateNavCircles();
   saveQuizState(activeKey);
