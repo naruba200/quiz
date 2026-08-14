@@ -423,7 +423,8 @@ function submitAnswer(i) {
     fb.className = "qz-feedback bad";
     document.getElementById("fbText").textContent = `Sai rồi — Đáp án đúng: ${String.fromCharCode(65 + q.c)}`;
     try { document.getElementById("wrongSound").play(); } catch (e) {}
-    const gap = 10 + Math.floor(Math.random() * 31);
+    const total = questions.length;
+    const gap = Math.round(total * 0.3) + Math.floor(Math.random() * Math.round(total * 0.7));
     order.splice(Math.min(pos + gap, order.length), 0, qIndex);
   }
   updateNavCircles();
