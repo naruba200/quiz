@@ -382,7 +382,17 @@ function advance() {
 function renderQuestion() {
   clearCountdown();
   while (pos < order.length && done[order[pos]]) pos++;
-  if (pos >= order.length) { showResult(); return; }
+  if (pos >= order.length) {
+    if (score < questions.length) {
+      for (let i = 0; i < questions.length; i++) {
+        if (!done[i]) order.push(i);
+      }
+      renderQuestion();
+      return;
+    }
+    showResult();
+    return;
+  }
   const qIndex = order[pos];
   displayIndex = qIndex;
   const q = questions[qIndex];
