@@ -172,6 +172,8 @@ let attemptCounts = [];
 let currentAnswered = false;
 let pendingTimer = null;
 let countdownTimer = null;
+let activeKey = "";
+const STATE_PREFIX = "quizState_";
 
 const OPT_COLORS = ['#e8403e', '#2f6bff', '#d97706', '#23b573'];
 const AUTO_ADVANCE_MS = 3000;
@@ -228,17 +230,52 @@ function renderHome() {
   totals.textContent = "Tổng cộng " + allQuizKeys().length + " đề — " + total + " câu hỏi";
 }
 
+function loadQuizState(key) {
+  try {
+    const raw = localStorage.getItem(STATE_PREFIX + key);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.questions) || !Array.isArray(s.order) || !Array.isArray(s.done)) return null;
+    return s;
+  } catch (e) { return null; }
+}
+function saveQuizState(key) {
+  try {
+    localStorage.setItem(STATE_PREFIX + key, JSON.stringify({
+      questions: questions, order: order, pos: pos, score: score,
+      done: done, attemptCounts: attemptCounts, savedAt: Date.now()
+    }));
+  } catch (e) {}
+}
+function clearQuizState(key) {
+  try { localStorage.removeItem(STATE_PREFIX + key); } catch (e) {}
+}
+
 function openQuiz(key) {
   const quiz = resolveQuiz(key);
   if (!quiz) return renderHome();
-  questions = quiz.questions;
+  activeKey = key;
   document.title = quiz.title + " — Trắc nghiệm";
   document.getElementById("quizTitle").textContent = quiz.title;
   document.getElementById("homeScreen").classList.add("hidden");
   document.getElementById("resultBox").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
   history.replaceState(null, "", "quiz.html?q=" + key);
-  initQuiz();
+  const saved = loadQuizState(key);
+  if (saved && saved.questions.length === quiz.questions.length) {
+    questions = saved.questions;
+    order = saved.order;
+    pos = saved.pos;
+    score = saved.score;
+    done = saved.done;
+    attemptCounts = saved.attemptCounts;
+    displayIndex = -1;
+    currentAnswered = false;
+    buildNavCircles();
+    renderQuestion();
+  } else {
+    initQuiz();
+  }
 }
 
 function shuffleArray(arr) {
@@ -259,6 +296,7 @@ function shuffleQuestions() {
   shuffleArray(questions);
 }
 function initQuiz() {
+  clearQuizState(activeKey);
   shuffleQuestions();
   pos = 0; score = 0;
   order = questions.map((_, i) => i);
@@ -388,11 +426,13 @@ function submitAnswer(i) {
     order.splice(Math.min(pos + gap, order.length), 0, qIndex);
   }
   updateNavCircles();
+  saveQuizState(activeKey);
   startCountdown(AUTO_ADVANCE_MS);
 }
 
 function showResult() {
   clearCountdown();
+  clearQuizState(activeKey);
   document.getElementById("quizScreen").classList.add("hidden");
   const rb = document.getElementById("resultBox");
   rb.classList.remove("hidden");
