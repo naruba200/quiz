@@ -255,6 +255,7 @@ function openQuiz(key) {
   const quiz = resolveQuiz(key);
   if (!quiz) return renderHome();
   activeKey = key;
+  questions = quiz.questions;
   document.title = quiz.title + " — Trắc nghiệm";
   document.getElementById("quizTitle").textContent = quiz.title;
   document.getElementById("homeScreen").classList.add("hidden");
